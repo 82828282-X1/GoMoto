@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GoMoto Location & Distance</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    #map { height: 400px; width: 100%; margin-top: 20px; }
+    #info { margin-top: 20px; }
+    .btn { padding: 10px 20px; margin-top: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>GoMoto Pickup & Destination</h2>
+
+  <!-- Pickup and Destination Inputs -->
+  <label>Pickup Location (Detected):</label>
+  <input type="text" id="pickupLocation" placeholder="Detecting current location..." readonly><br>
+
+  <label>Destination:</label>
+  <input type="text" id="destination" placeholder="Enter destination address"><br>
+
+  <!-- Google Map Display -->
+  <div id="map"></div>
+
+  <!-- Information Display -->
+  <div id="info">
+    <p id="distance">Distance: Calculating...</p>
+    <button class="btn" onclick="copyInfo()">Copy Information</button>
+  </div>
+
+  <script>
+    let pickupCoords, destinationCoords;
+
+    // Initialize Google Map and set pickup location
+    function initMap() {
+      const map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: -15.7861, lng: 35.0058 }, // Default to central location
+        zoom: 13,
+      });
+
+      // Detect the user's current location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          pickupCoords = { lat: position.coords.latitude, lng: position.coords.longitude };
+          document.getElementById("pickupLocation").value = `Lat: ${pickupCoords.lat}, Lng: ${pickupCoords.lng}`;
+          addMarker(map, pickupCoords, "Pickup Location");
+
+          // Center map to the pickup location
+          map.setCenter(pickupCoords);
+        });
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+
+      // Event to calculate route and distance when destination changes
+      document.getElementById("destination").addEventListener("change", () => calculateRoute(map));
+    }
+
+    // Function to add markers
+    function addMarker(map, position, title) {
+      new google.maps.Marker({
+        position: position,
+        map: map,
+        title: title,
+      });
+    }
+
+    // Function to calculate the route and distance
+    function calculateRoute(map) {
+      const destinationAddress = document.getElementById("destination").value;
+      const geocoder = new google.maps.Geocoder();
+
+      geocoder.geocode({ address: destinationAddress }, (results, status) => {
+        if (status === 'OK') {
+          destinationCoords = results[0].geometry.location;
+          addMarker(map, destinationCoords, "Destination");
+
+          // Route calculation
+          const directionsService = new google.maps.DirectionsService();
+          const directionsRenderer = new google.maps.DirectionsRenderer();
+          directionsRenderer.setMap(map);
+
+          directionsService.route(
+            {
+              origin: pickupCoords,
+              destination: destinationCoords,
+              travelMode: 'DRIVING',
+            },
+            (response, status) => {
+              if (status === 'OK') {
+                directionsRenderer.setDirections(response);
+
+                // Distance calculation
+                const distanceText = response.routes[0].legs[0].distance.text;
+                document.getElementById("distance").innerText = `Distance: ${distanceText}`;
+              } else {
+                alert("Could not calculate route.");
+              }
+            }
+          );
+        } else {
+          alert("Could not find destination address.");
+        }
+      });
+    }
+
+    // Function to copy pickup, destination, and distance info
+    function copyInfo() {
+      const pickupText = `Pickup Location: Lat ${pickupCoords.lat}, Lng ${pickupCoords.lng}`;
+      const destinationText = `Destination Location: Lat ${destinationCoords.lat()}, Lng ${destinationCoords.lng()}`;
+      const distanceText = document.getElementById("distance").innerText;
+
+      const infoText = `${pickupText}\n${destinationText}\n${distanceText}`;
+      navigator.clipboard.writeText(infoText).then(() => {
+        alert("Information copied to clipboard!");
+      });
+    }
+  </script>
+  
+  <!-- Replace YOUR_API_KEY with your actual Google Maps API key -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
+</body>
+</html>
