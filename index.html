@@ -1,218 +1,115 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>GoMoto</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        padding: 10px;
-        background-color: #f9f9f9;
-        color: #333;
-      }
-      #map {
-        height: 400px;
-        width: 100%;
-        margin-top: 10px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
-      .btn {
-        padding: 10px 18px;
-        background-color: #F4A261; /* Yellow-orange color */
-        color: #FFFFFF;
-        border: none;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 14px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: background-color 0.3s;
-        margin: 10px;
-      }
-      .btn:hover {
-        background-color: #E63946; /* Red color */
-      }
-      input[type="text"] {
-        width: 90%;
-        padding: 10px;
-        margin-top: 5px;
-        border-radius: 20px;
-        border: 1px solid #ccc;
-        font-size: 14px;
-      }
-      #info {
-        margin-top: 10px;
-      }
-      #manualCopy {
-        display: none;
-        padding: 10px;
-        border: 1px solid #ddd;
-        margin-top: 10px;
-        border-radius: 5px;
-        background-color: #fffbe6;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Removed the heading to save screen space -->
-    <!-- <h2 style="color: #F4A261;">GoMoto - Plan Your Ride</h2> -->
-
-    <!-- Pickup and Destination Inputs -->
-    <label>Pickup Location (Detected):</label>
-    <input type="text" id="pickupLocation" placeholder="Detecting current location..." readonly><br>
-
-    <label>Destination:</label>
-    <input type="text" id="destination" placeholder="Enter destination address"><br>
-
-    <!-- Google Map Display -->
-    <div id="map"></div>
-
-    <!-- Information Display and Copy Button -->
-    <div id="info">
-      <p id="distance">Distance: Calculating...</p>
-      <button class="btn" onclick="copyInfo()">Copy Information</button>
-      <div id="manualCopy"></div>
+<html lang="en">
+<head>
+  <title>GoMoto - Enhanced Experience</title>
+  <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+  <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+  <style>
+    /* Map and general styles */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #map-container {
+      height: 60%;
+      width: 100%;
+    }
+    /* Swipe Selector Styles */
+    .swiper-container {
+      width: 100%;
+      height: 100px;
+      background-color: #f0f0f0;
+    }
+    .swiper-slide {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .selected-vehicle {
+      background-color: #F4A261;
+      border-radius: 20px;
+      color: #FFFFFF;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Swiper container for vehicle selection -->
+  <div class="swiper-container">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide selected-vehicle" onclick="setTransport('Car')">Car</div>
+      <div class="swiper-slide selected-vehicle" onclick="setTransport('Bike')">Motorcycle</div>
     </div>
+  </div>
 
-    <script>
-      let pickupCoords, destinationCoords, directionsRenderer, directionsService;
-      let destinationMarker;
+  <!-- Map container -->
+  <div id="map-container"></div>
 
-      function initMap() {
-        directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({
-          suppressMarkers: true, // Hide default markers so we can customize them
-        });
+  <!-- Copy Info Button -->
+  <button id="copy-info">Copy Information</button>
 
-        const map = new google.maps.Map(document.getElementById("map"), {
-          center: { lat: -15.7861, lng: 35.0058 },
-          zoom: 13,
-        });
-        directionsRenderer.setMap(map);
+  <script>
+    let transportMode = "Car"; // Default transport mode
 
-        // Detect the user's current location
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition((position) => {
-            pickupCoords = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
-            document.getElementById("pickupLocation").value = `Lat: ${pickupCoords.lat.toFixed(5)}, Lng: ${pickupCoords.lng.toFixed(5)}`;
-            addMarker(map, pickupCoords, "Pickup Location", true);
-            map.setCenter(pickupCoords);
-          }, (error) => {
-            alert("Location access denied. Please enable location permissions in your browser settings.");
-          });
-        } else {
-          alert("Geolocation is not supported by this browser.");
+    function setTransport(mode) {
+      transportMode = mode;
+    }
+
+    function initMap() {
+      // Initialize map with satellite view
+      const map = new google.maps.Map(document.getElementById("map-container"), {
+        center: { lat: -15.81763, lng: 35.07063 },
+        zoom: 14,
+        mapTypeId: "satellite"
+      });
+
+      // Arrow marker for current location
+      const currentLocation = new google.maps.Marker({
+        position: { lat: -15.81763, lng: 35.07063 },
+        map,
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 5,
+          rotation: 0, // Adjust dynamically with device direction
+          fillColor: "#FF6347",
+          fillOpacity: 1,
+          strokeWeight: 2,
+          strokeColor: "#ffffff"
         }
+      });
 
-        // Initialize destination autocomplete
-        const destinationInput = document.getElementById("destination");
-        const autocomplete = new google.maps.places.Autocomplete(destinationInput);
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          if (!place.geometry || !place.geometry.location) {
-            alert("No details available for input: '" + place.name + "'");
-            return;
-          }
-          destinationCoords = place.geometry.location;
-          setDestination(map, destinationCoords);
-        });
+      // Pin for destination
+      const destinationMarker = new google.maps.Marker({
+        position: { lat: -15.82483, lng: 35.09010 }, // Placeholder coordinates
+        map,
+        icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+      });
+    }
 
-        // Allow dragging of the map to set destination
-        map.addListener("click", (event) => {
-          setDestination(map, event.latLng);
-        });
-      }
+    // Copy Information Button Action
+    document.getElementById("copy-info").onclick = () => {
+      const info = `Transport: ${transportMode}\nPickup: ${currentLocation.position}\nDestination: ${destinationMarker.position}`;
+      navigator.clipboard.writeText(info).then(() => alert("Info copied!"));
+    };
 
-      // Function to add markers
-      function addMarker(map, position, title, isPickup) {
-        new google.maps.Marker({
-          position: position,
-          map: map,
-          title: title,
-          icon: isPickup ? "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-        });
-      }
-
-      // Function to set destination and calculate route
-      function setDestination(map, location) {
-        if (destinationMarker) {
-          destinationMarker.setMap(null);
-        }
-        destinationMarker = new google.maps.Marker({
-          position: location,
-          map: map,
-          draggable: true,
-          title: "Drag to adjust destination",
-          icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-        });
-
-        destinationMarker.addListener("dragend", () => {
-          destinationCoords = destinationMarker.getPosition();
-          calculateRoute();
-        });
-
-        destinationCoords = location;
-        calculateRoute();
-      }
-
-      // Function to calculate the route and distance
-      function calculateRoute() {
-        if (!pickupCoords || !destinationCoords) {
-          alert("Please ensure both pickup and destination locations are available.");
-          return;
-        }
-
-        directionsService.route(
-          {
-            origin: pickupCoords,
-            destination: destinationCoords,
-            travelMode: 'DRIVING',
-          },
-          (response, status) => {
-            if (status === 'OK') {
-              directionsRenderer.setDirections(response);
-
-              // Calculate and display distance
-              const distanceText = response.routes[0].legs[0].distance.text;
-              document.getElementById("distance").innerText = `Distance: ${distanceText}`;
-            } else {
-              alert("Could not calculate route: " + status);
-            }
-          }
-        );
-      }
-
-      // Function to copy pickup, destination, and distance info
-      function copyInfo() {
-        if (!pickupCoords || !destinationCoords) {
-          alert("Please ensure both pickup and destination locations are available.");
-          return;
-        }
-
-        const pickupText = `Pickup Location: Lat ${pickupCoords.lat.toFixed(5)}, Lng ${pickupCoords.lng.toFixed(5)}`;
-        const destinationText = `Destination Location: Lat ${destinationCoords.lat().toFixed(5)}, Lng ${destinationCoords.lng().toFixed(5)}`;
-        const distanceText = document.getElementById("distance").innerText;
-
-        const infoText = `${pickupText}\n${destinationText}\n${distanceText}`;
-        navigator.clipboard.writeText(infoText).then(() => {
-          alert("Information copied to clipboard!");
-        }).catch(() => {
-          // Fallback for manual copying
-          document.getElementById("manualCopy").innerText = infoText;
-          document.getElementById("manualCopy").style.display = "block";
-          alert("Manual copy: Long press to select and copy the text.");
-        });
-      }
-    </script>
-    
-    <!-- Google Maps JavaScript and Places Library -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"></script>
-  </body>
+    window.initMap = initMap;
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&callback=initMap"></script>
+  <script>
+    // Swiper JS initialization
+    var swiper = new Swiper('.swiper-container', {
+      slidesPerView: 2,
+      spaceBetween: 30,
+    });
+  </script>
+</body>
 </html>
+
+    
 
 
 
