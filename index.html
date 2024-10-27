@@ -55,14 +55,17 @@
     </style>
   </head>
   <body>
+    <!-- Pickup and Destination Inputs -->
     <label>Pickup Location (Detected):</label>
     <input type="text" id="pickupLocation" placeholder="Detecting current location..." readonly><br>
 
     <label>Destination:</label>
     <input type="text" id="destination" placeholder="Enter destination address"><br>
 
+    <!-- Google Map Display -->
     <div id="map"></div>
 
+    <!-- Information Display and Copy Button -->
     <div id="info">
       <p id="distance">Distance: Calculating...</p>
       <button class="btn" onclick="copyInfo()">Copy Information</button>
@@ -70,16 +73,17 @@
     </div>
 
     <script>
-      let map, pickupMarker, destinationMarker, directionsRenderer, directionsService;
-      let destinationCoords;
+      let pickupCoords, destinationCoords, directionsRenderer, directionsService;
+      let destinationMarker, dynamicMarker;
+      let map;
 
       function initMap() {
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({
           suppressMarkers: true,
           polylineOptions: {
-            strokeColor: '#FFFFFF',
-            strokeOpacity: 0.7,
+            strokeColor: '#FFFFFF', // Set path to white
+            strokeOpacity: 1.0,
             strokeWeight: 5
           }
         });
@@ -87,18 +91,27 @@
         map = new google.maps.Map(document.getElementById("map"), {
           center: { lat: -15.7861, lng: 35.0058 },
           zoom: 13,
-          mapTypeId: "satellite",
+          mapTypeId: 'satellite'
         });
         directionsRenderer.setMap(map);
 
+        // Detect the user's current location
         if (navigator.geolocation) {
-          navigator.geolocation.watchPosition(updatePickupLocation, (error) => {
-            alert("Location access denied. Please enable location permissions.");
+          navigator.geolocation.watchPosition((position) => {
+            pickupCoords = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            document.getElementById("pickupLocation").value = `Lat: ${pickupCoords.lat.toFixed(5)}, Lng: ${pickupCoords.lng.toFixed(5)}`;
+            updatePointer(map, pickupCoords);
+          }, (error) => {
+            alert("Location access denied. Please enable location permissions in your browser settings.");
           });
         } else {
           alert("Geolocation is not supported by this browser.");
         }
 
+        // Initialize destination autocomplete
         const destinationInput = document.getElementById("destination");
         const autocomplete = new google.maps.places.Autocomplete(destinationInput);
         autocomplete.addListener("place_changed", () => {
@@ -110,48 +123,43 @@
           destinationCoords = place.geometry.location;
           setDestination(destinationCoords);
         });
-
-        if (window.DeviceOrientationEvent) {
-          window.addEventListener('deviceorientation', updateMarkerRotation);
-        }
       }
 
-      function updatePickupLocation(position) {
-        const coords = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        
-        document.getElementById("pickupLocation").value = `Lat: ${coords.lat.toFixed(5)}, Lng: ${coords.lng.toFixed(5)}`;
-        
-        if (!pickupMarker) {
-          pickupMarker = new google.maps.Marker({
-            position: coords,
+      // Function to add or update the dynamic pointer
+      function updatePointer(map, position) {
+        if (!dynamicMarker) {
+          dynamicMarker = new google.maps.Marker({
+            position: position,
             map: map,
-            title: "Pickup Location",
             icon: {
-              url: "https://maps.google.com/mapfiles/kml/shapes/arrow.png",
-              scaledSize: new google.maps.Size(40, 40),
-            },
+              path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+              scale: 5,
+              fillColor: "#FFA500",
+              fillOpacity: 1,
+              strokeWeight: 1,
+              rotation: 0 // This will be updated based on orientation
+            }
           });
         } else {
-          pickupMarker.setPosition(coords);
+          dynamicMarker.setPosition(position);
         }
-
-        map.setCenter(coords);
       }
 
-      function updateMarkerRotation(event) {
-        if (pickupMarker && event.alpha !== null) {
-          const rotation = event.alpha; // 'alpha' represents the compass direction in degrees
-          pickupMarker.setIcon({
-            url: "https://maps.google.com/mapfiles/kml/shapes/arrow.png",
-            scaledSize: new google.maps.Size(40, 40),
-            rotation: rotation
+      // Handle device orientation
+      window.addEventListener('deviceorientation', (event) => {
+        if (dynamicMarker && event.alpha !== null) {
+          dynamicMarker.setIcon({
+            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 5,
+            fillColor: "#FFA500",
+            fillOpacity: 1,
+            strokeWeight: 1,
+            rotation: event.alpha // Rotation based on device orientation
           });
         }
-      }
+      });
 
+      // Set destination marker and calculate route
       function setDestination(location) {
         if (destinationMarker) {
           destinationMarker.setMap(null);
@@ -161,12 +169,9 @@
           map: map,
           draggable: true,
           title: "Drag to adjust destination",
-          icon: {
-            url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-            scaledSize: new google.maps.Size(40, 40),
-          }
+          icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
         });
-
+        
         destinationMarker.addListener("dragend", () => {
           destinationCoords = destinationMarker.getPosition();
           calculateRoute();
@@ -176,15 +181,16 @@
         calculateRoute();
       }
 
+      // Calculate route and distance
       function calculateRoute() {
-        if (!pickupMarker || !destinationCoords) {
+        if (!pickupCoords || !destinationCoords) {
           alert("Please ensure both pickup and destination locations are available.");
           return;
         }
 
         directionsService.route(
           {
-            origin: pickupMarker.getPosition(),
+            origin: pickupCoords,
             destination: destinationCoords,
             travelMode: 'DRIVING',
           },
@@ -200,13 +206,14 @@
         );
       }
 
+      // Copy information function
       function copyInfo() {
-        if (!pickupMarker || !destinationCoords) {
+        if (!pickupCoords || !destinationCoords) {
           alert("Please ensure both pickup and destination locations are available.");
           return;
         }
 
-        const pickupText = `Pickup Location: Lat ${pickupMarker.getPosition().lat().toFixed(5)}, Lng ${pickupMarker.getPosition().lng().toFixed(5)}`;
+        const pickupText = `Pickup Location: Lat ${pickupCoords.lat.toFixed(5)}, Lng ${pickupCoords.lng.toFixed(5)}`;
         const destinationText = `Destination Location: Lat ${destinationCoords.lat().toFixed(5)}, Lng ${destinationCoords.lng().toFixed(5)}`;
         const distanceText = document.getElementById("distance").innerText;
 
@@ -220,7 +227,7 @@
         });
       }
     </script>
-   
+
     <!-- Google Maps JavaScript and Places Library -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"></script>
   </body>
