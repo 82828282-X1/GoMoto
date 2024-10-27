@@ -55,14 +55,20 @@
     </style>
   </head>
   <body>
+    <!-- Removed the heading to save screen space -->
+    <!-- <h2 style="color: #F4A261;">GoMoto - Plan Your Ride</h2> -->
+
+    <!-- Pickup and Destination Inputs -->
     <label>Pickup Location (Detected):</label>
     <input type="text" id="pickupLocation" placeholder="Detecting current location..." readonly><br>
 
     <label>Destination:</label>
     <input type="text" id="destination" placeholder="Enter destination address"><br>
 
+    <!-- Google Map Display -->
     <div id="map"></div>
 
+    <!-- Information Display and Copy Button -->
     <div id="info">
       <p id="distance">Distance: Calculating...</p>
       <button class="btn" onclick="copyInfo()">Copy Information</button>
@@ -76,19 +82,16 @@
       function initMap() {
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({
-          suppressMarkers: true
+          suppressMarkers: true, // Hide default markers so we can customize them
         });
 
         const map = new google.maps.Map(document.getElementById("map"), {
           center: { lat: -15.7861, lng: 35.0058 },
           zoom: 13,
-          mapTypeId: "satellite",
-          tilt: 45,
-          mapTypeControl: false,
-          streetViewControl: false,
         });
         directionsRenderer.setMap(map);
 
+        // Detect the user's current location
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition((position) => {
             pickupCoords = {
@@ -105,6 +108,7 @@
           alert("Geolocation is not supported by this browser.");
         }
 
+        // Initialize destination autocomplete
         const destinationInput = document.getElementById("destination");
         const autocomplete = new google.maps.places.Autocomplete(destinationInput);
         autocomplete.addListener("place_changed", () => {
@@ -116,17 +120,24 @@
           destinationCoords = place.geometry.location;
           setDestination(map, destinationCoords);
         });
+
+        // Allow dragging of the map to set destination
+        map.addListener("click", (event) => {
+          setDestination(map, event.latLng);
+        });
       }
 
+      // Function to add markers
       function addMarker(map, position, title, isPickup) {
         new google.maps.Marker({
           position: position,
           map: map,
           title: title,
-          icon: isPickup ? "https://maps.google.com/mapfiles/kml/shapes/arrow.png" : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+          icon: isPickup ? "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
         });
       }
 
+      // Function to set destination and calculate route
       function setDestination(map, location) {
         if (destinationMarker) {
           destinationMarker.setMap(null);
@@ -148,6 +159,7 @@
         calculateRoute();
       }
 
+      // Function to calculate the route and distance
       function calculateRoute() {
         if (!pickupCoords || !destinationCoords) {
           alert("Please ensure both pickup and destination locations are available.");
@@ -164,6 +176,7 @@
             if (status === 'OK') {
               directionsRenderer.setDirections(response);
 
+              // Calculate and display distance
               const distanceText = response.routes[0].legs[0].distance.text;
               document.getElementById("distance").innerText = `Distance: ${distanceText}`;
             } else {
@@ -173,6 +186,7 @@
         );
       }
 
+      // Function to copy pickup, destination, and distance info
       function copyInfo() {
         if (!pickupCoords || !destinationCoords) {
           alert("Please ensure both pickup and destination locations are available.");
@@ -187,13 +201,15 @@
         navigator.clipboard.writeText(infoText).then(() => {
           alert("Information copied to clipboard!");
         }).catch(() => {
+          // Fallback for manual copying
           document.getElementById("manualCopy").innerText = infoText;
           document.getElementById("manualCopy").style.display = "block";
           alert("Manual copy: Long press to select and copy the text.");
         });
       }
     </script>
-
+   
+    <!-- Google Maps JavaScript and Places Library -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"></script>
   </body>
 </html>
