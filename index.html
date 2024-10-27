@@ -1,43 +1,48 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>GoMoto - Location & Distance</title>
+    <title>GoMoto - Plan Your Ride</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
       body {
         font-family: Arial, sans-serif;
         text-align: center;
-        padding: 20px;
+        padding: 10px;
         background-color: #f9f9f9;
         color: #333;
       }
       #map {
         height: 400px;
         width: 100%;
-        margin-top: 20px;
+        margin-top: 10px;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
       .btn {
-        padding: 12px 20px;
+        padding: 10px 18px;
         background-color: #EA9E06;
         color: #FFFFFF;
         border: none;
         border-radius: 20px;
         cursor: pointer;
-        font-size: 16px;
+        font-size: 14px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         transition: background-color 0.3s;
+        margin: 10px;
       }
       .btn:hover {
         background-color: #F70202;
       }
       input[type="text"] {
-        width: 80%;
+        width: 90%;
         padding: 10px;
-        margin-top: 10px;
+        margin-top: 5px;
         border-radius: 20px;
         border: 1px solid #ccc;
-        font-size: 16px;
+        font-size: 14px;
+      }
+      #info {
+        margin-top: 10px;
       }
     </style>
   </head>
@@ -62,11 +67,12 @@
 
     <script>
       let pickupCoords, destinationCoords, directionsRenderer, directionsService;
+      let destinationMarker;
 
       function initMap() {
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer();
-        
+
         const map = new google.maps.Map(document.getElementById("map"), {
           center: { lat: -15.7861, lng: 35.0058 }, // Default location
           zoom: 13,
@@ -78,7 +84,7 @@
           navigator.geolocation.getCurrentPosition((position) => {
             pickupCoords = { lat: position.coords.latitude, lng: position.coords.longitude };
             document.getElementById("pickupLocation").value = `Lat: ${pickupCoords.lat.toFixed(5)}, Lng: ${pickupCoords.lng.toFixed(5)}`;
-            addMarker(map, pickupCoords, "Pickup Location");
+            addMarker(map, pickupCoords, "Pickup Location", true);
             map.setCenter(pickupCoords);
           });
         } else {
@@ -95,17 +101,44 @@
             return;
           }
           destinationCoords = place.geometry.location;
-          calculateRoute(map);
+          setDestination(map, destinationCoords);
+        });
+
+        // Allow dragging of the map to set destination
+        map.addListener("click", (event) => {
+          setDestination(map, event.latLng);
         });
       }
 
       // Function to add markers
-      function addMarker(map, position, title) {
+      function addMarker(map, position, title, isPickup) {
         new google.maps.Marker({
           position: position,
           map: map,
           title: title,
+          icon: isPickup ? "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
         });
+      }
+
+      // Function to set destination and calculate route
+      function setDestination(map, location) {
+        if (destinationMarker) {
+          destinationMarker.setMap(null);
+        }
+        destinationMarker = new google.maps.Marker({
+          position: location,
+          map: map,
+          draggable: true,
+          title: "Drag to adjust destination",
+        });
+
+        destinationMarker.addListener("dragend", () => {
+          destinationCoords = destinationMarker.getPosition();
+          calculateRoute(map);
+        });
+
+        destinationCoords = location;
+        calculateRoute(map);
       }
 
       // Function to calculate the route and distance
@@ -152,8 +185,9 @@
         });
       }
     </script>
-  
-  <!-- Replace YOUR_API_KEY with your actual Google Maps API key -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&callback=initMap"></script>
-</body>
+    
+    <!-- Google Maps JavaScript and Places Library -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"></script>
+  </body>
 </html>
+
