@@ -1,111 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <title>GoMoto - Enhanced Experience</title>
-  <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
-  <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+  <title>GoMoto - Plan Your Ride</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <style>
-    /* Map and general styles */
-    html, body {
-      height: 100%;
+    body {
       margin: 0;
-      padding: 0;
+      font-family: Arial, sans-serif;
     }
-    #map-container {
-      height: 60%;
-      width: 100%;
+    .header {
+      background-color: #EA9E06;
+      color: white;
+      padding: 10px;
+      text-align: center;
     }
-    /* Swipe Selector Styles */
-    .swiper-container {
-      width: 100%;
-      height: 100px;
-      background-color: #f0f0f0;
-    }
-    .swiper-slide {
+    .tab-container {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: bold;
+      justify-content: space-around;
+      background-color: #F8B03C;
+      padding: 10px;
+      border-radius: 10px;
     }
-    .selected-vehicle {
-      background-color: #F4A261;
-      border-radius: 20px;
-      color: #FFFFFF;
-      padding: 10px 20px;
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
       cursor: pointer;
+      font-weight: bold;
+      color: #FFFFFF;
+    }
+    .tab.active {
+      background-color: #FFFFFF;
+      color: #EA9E06;
+      border-radius: 5px;
+    }
+    .map-container {
+      height: calc(100vh - 150px);
+      position: relative;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+    .info-button-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    .info-button {
+      background-color: #EA9E06;
+      border: none;
+      color: white;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <!-- Swiper container for vehicle selection -->
-  <div class="swiper-container">
-    <div class="swiper-wrapper">
-      <div class="swiper-slide selected-vehicle" onclick="setTransport('Car')">Car</div>
-      <div class="swiper-slide selected-vehicle" onclick="setTransport('Bike')">Motorcycle</div>
-    </div>
+  <div class="header">GoMoto - Plan Your Ride</div>
+  <div class="tab-container">
+    <div class="tab active" onclick="selectMode('Car')">Car</div>
+    <div class="tab" onclick="selectMode('Motorcycle')">Motorcycle</div>
+  </div>
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
+  <div class="info-button-container">
+    <button class="info-button" onclick="copyInformation()">Copy Information</button>
   </div>
 
-  <!-- Map container -->
-  <div id="map-container"></div>
-
-  <!-- Copy Info Button -->
-  <button id="copy-info">Copy Information</button>
-
   <script>
-    let transportMode = "Car"; // Default transport mode
-
-    function setTransport(mode) {
-      transportMode = mode;
-    }
+    let map, marker, mode = 'Car';
 
     function initMap() {
-      // Initialize map with satellite view
-      const map = new google.maps.Map(document.getElementById("map-container"), {
+      map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: -15.81763, lng: 35.07063 },
-        zoom: 14,
-        mapTypeId: "satellite"
+        zoom: 15,
+        mapTypeId: 'satellite'
       });
-
-      // Arrow marker for current location
-      const currentLocation = new google.maps.Marker({
-        position: { lat: -15.81763, lng: 35.07063 },
-        map,
+      marker = new google.maps.Marker({
+        map: map,
         icon: {
-          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 5,
-          rotation: 0, // Adjust dynamically with device direction
-          fillColor: "#FF6347",
-          fillOpacity: 1,
-          strokeWeight: 2,
-          strokeColor: "#ffffff"
+          url: 'https://path-to-your-arrow-icon.svg', // Arrow icon for current location
+          rotation: 0 // Adjust rotation with device orientation
         }
-      });
-
-      // Pin for destination
-      const destinationMarker = new google.maps.Marker({
-        position: { lat: -15.82483, lng: 35.09010 }, // Placeholder coordinates
-        map,
-        icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
       });
     }
 
-    // Copy Information Button Action
-    document.getElementById("copy-info").onclick = () => {
-      const info = `Transport: ${transportMode}\nPickup: ${currentLocation.position}\nDestination: ${destinationMarker.position}`;
-      navigator.clipboard.writeText(info).then(() => alert("Info copied!"));
-    };
+    function selectMode(selectedMode) {
+      mode = selectedMode;
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelector(`.tab:nth-child(${mode === 'Car' ? 1 : 2})`).classList.add('active');
+    }
 
-    window.initMap = initMap;
+    function copyInformation() {
+      const info = `Pickup Location: ${marker.getPosition().toString()} \nMode of Transport: ${mode}`;
+      navigator.clipboard.writeText(info).then(() => alert("Copied to clipboard"));
+    }
+
+    window.onload = function() {
+      initMap();
+    };
   </script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&callback=initMap"></script>
-  <script>
-    // Swiper JS initialization
-    var swiper = new Swiper('.swiper-container', {
-      slidesPerView: 2,
-      spaceBetween: 30,
-    });
-  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&callback=initMap" async defer></script>
 </body>
 </html>
 
