@@ -70,9 +70,8 @@
     </div>
 
     <script>
-      let pickupCoords, destinationCoords, directionsRenderer, directionsService;
-      let destinationMarker, dynamicMarker;
-      let map;
+      let map, pickupMarker, destinationMarker, directionsRenderer, directionsService;
+      let destinationCoords;
 
       function initMap() {
         directionsService = new google.maps.DirectionsService();
@@ -80,7 +79,7 @@
           suppressMarkers: true,
           polylineOptions: {
             strokeColor: '#FFFFFF',
-            strokeOpacity: 1.0,
+            strokeOpacity: 0.7,
             strokeWeight: 5
           }
         });
@@ -88,20 +87,13 @@
         map = new google.maps.Map(document.getElementById("map"), {
           center: { lat: -15.7861, lng: 35.0058 },
           zoom: 13,
-          mapTypeId: 'hybrid' // Hybrid includes satellite imagery with labels
+          mapTypeId: "hybrid", // Hybrid mode to show satellite view with labels
         });
         directionsRenderer.setMap(map);
 
         if (navigator.geolocation) {
-          navigator.geolocation.watchPosition((position) => {
-            pickupCoords = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
-            document.getElementById("pickupLocation").value = `Lat: ${pickupCoords.lat.toFixed(5)}, Lng: ${pickupCoords.lng.toFixed(5)}`;
-            updatePointer(map, pickupCoords);
-          }, (error) => {
-            alert("Location access denied. Please enable location permissions in your browser settings.");
+          navigator.geolocation.watchPosition(updatePickupLocation, (error) => {
+            alert("Location access denied. Please enable location permissions.");
           });
         } else {
           alert("Geolocation is not supported by this browser.");
@@ -118,24 +110,45 @@
           destinationCoords = place.geometry.location;
           setDestination(destinationCoords);
         });
+
+        if (window.DeviceOrientationEvent) {
+          window.addEventListener('deviceorientation', updateMarkerRotation);
+        }
       }
 
-      function updatePointer(map, position) {
-        if (!dynamicMarker) {
-          dynamicMarker = new google.maps.Marker({
-            position: position,
+      function updatePickupLocation(position) {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        
+        document.getElementById("pickupLocation").value = `Lat: ${coords.lat.toFixed(5)}, Lng: ${coords.lng.toFixed(5)}`;
+        
+        if (!pickupMarker) {
+          pickupMarker = new google.maps.Marker({
+            position: coords,
             map: map,
+            title: "Pickup Location",
             icon: {
-              path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-              scale: 5,
-              fillColor: "#FFA500",
-              fillOpacity: 1,
-              strokeWeight: 1,
-              rotation: 0
-            }
+              url: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Map_marker_icon_-_Orange.svg/120px-Map_marker_icon_-_Orange.svg.png",
+              scaledSize: new google.maps.Size(40, 40),
+            },
           });
         } else {
-          dynamicMarker.setPosition(position);
+          pickupMarker.setPosition(coords);
+        }
+
+        map.setCenter(coords);
+      }
+
+      function updateMarkerRotation(event) {
+        if (pickupMarker && event.alpha !== null) {
+          const rotation = event.alpha;
+          pickupMarker.setIcon({
+            url: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Map_marker_icon_-_Orange.svg/120px-Map_marker_icon_-_Orange.svg.png",
+            scaledSize: new google.maps.Size(40, 40),
+            rotation: rotation // Using rotation property to indicate direction
+          });
         }
       }
 
@@ -147,10 +160,13 @@
           position: location,
           map: map,
           draggable: true,
-          title: "Destination",
-          icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" // Custom red pin marker
+          title: "Drag to adjust destination",
+          icon: {
+            url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+            scaledSize: new google.maps.Size(40, 40),
+          }
         });
-        
+
         destinationMarker.addListener("dragend", () => {
           destinationCoords = destinationMarker.getPosition();
           calculateRoute();
@@ -161,14 +177,14 @@
       }
 
       function calculateRoute() {
-        if (!pickupCoords || !destinationCoords) {
+        if (!pickupMarker || !destinationCoords) {
           alert("Please ensure both pickup and destination locations are available.");
           return;
         }
 
         directionsService.route(
           {
-            origin: pickupCoords,
+            origin: pickupMarker.getPosition(),
             destination: destinationCoords,
             travelMode: 'DRIVING',
           },
@@ -185,12 +201,12 @@
       }
 
       function copyInfo() {
-        if (!pickupCoords || !destinationCoords) {
+        if (!pickupMarker || !destinationCoords) {
           alert("Please ensure both pickup and destination locations are available.");
           return;
         }
 
-        const pickupText = `Pickup Location: Lat ${pickupCoords.lat.toFixed(5)}, Lng ${pickupCoords.lng.toFixed(5)}`;
+        const pickupText = `Pickup Location: Lat ${pickupMarker.getPosition().lat().toFixed(5)}, Lng ${pickupMarker.getPosition().lng().toFixed(5)}`;
         const destinationText = `Destination Location: Lat ${destinationCoords.lat().toFixed(5)}, Lng ${destinationCoords.lng().toFixed(5)}`;
         const distanceText = document.getElementById("distance").innerText;
 
@@ -204,10 +220,12 @@
         });
       }
     </script>
-
+   
+    <!-- Google Maps JavaScript and Places Library -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"></script>
   </body>
 </html>
+
 
 
 
