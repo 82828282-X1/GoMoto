@@ -55,17 +55,14 @@
     </style>
   </head>
   <body>
-    <!-- Pickup and Destination Inputs -->
     <label>Pickup Location (Detected):</label>
     <input type="text" id="pickupLocation" placeholder="Detecting current location..." readonly><br>
 
     <label>Destination:</label>
     <input type="text" id="destination" placeholder="Enter destination address"><br>
 
-    <!-- Google Map Display -->
     <div id="map"></div>
 
-    <!-- Information Display and Copy Button -->
     <div id="info">
       <p id="distance">Distance: Calculating...</p>
       <button class="btn" onclick="copyInfo()">Copy Information</button>
@@ -82,7 +79,7 @@
         directionsRenderer = new google.maps.DirectionsRenderer({
           suppressMarkers: true,
           polylineOptions: {
-            strokeColor: '#FFFFFF', // Set path to white
+            strokeColor: '#FFFFFF',
             strokeOpacity: 1.0,
             strokeWeight: 5
           }
@@ -91,11 +88,10 @@
         map = new google.maps.Map(document.getElementById("map"), {
           center: { lat: -15.7861, lng: 35.0058 },
           zoom: 13,
-          mapTypeId: 'satellite'
+          mapTypeId: 'hybrid' // Hybrid includes satellite imagery with labels
         });
         directionsRenderer.setMap(map);
 
-        // Detect the user's current location
         if (navigator.geolocation) {
           navigator.geolocation.watchPosition((position) => {
             pickupCoords = {
@@ -111,7 +107,6 @@
           alert("Geolocation is not supported by this browser.");
         }
 
-        // Initialize destination autocomplete
         const destinationInput = document.getElementById("destination");
         const autocomplete = new google.maps.places.Autocomplete(destinationInput);
         autocomplete.addListener("place_changed", () => {
@@ -125,7 +120,6 @@
         });
       }
 
-      // Function to add or update the dynamic pointer
       function updatePointer(map, position) {
         if (!dynamicMarker) {
           dynamicMarker = new google.maps.Marker({
@@ -137,7 +131,7 @@
               fillColor: "#FFA500",
               fillOpacity: 1,
               strokeWeight: 1,
-              rotation: 0 // This will be updated based on orientation
+              rotation: 0
             }
           });
         } else {
@@ -145,21 +139,6 @@
         }
       }
 
-      // Handle device orientation
-      window.addEventListener('deviceorientation', (event) => {
-        if (dynamicMarker && event.alpha !== null) {
-          dynamicMarker.setIcon({
-            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-            scale: 5,
-            fillColor: "#FFA500",
-            fillOpacity: 1,
-            strokeWeight: 1,
-            rotation: event.alpha // Rotation based on device orientation
-          });
-        }
-      });
-
-      // Set destination marker and calculate route
       function setDestination(location) {
         if (destinationMarker) {
           destinationMarker.setMap(null);
@@ -168,8 +147,8 @@
           position: location,
           map: map,
           draggable: true,
-          title: "Drag to adjust destination",
-          icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+          title: "Destination",
+          icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" // Custom red pin marker
         });
         
         destinationMarker.addListener("dragend", () => {
@@ -181,7 +160,6 @@
         calculateRoute();
       }
 
-      // Calculate route and distance
       function calculateRoute() {
         if (!pickupCoords || !destinationCoords) {
           alert("Please ensure both pickup and destination locations are available.");
@@ -206,7 +184,6 @@
         );
       }
 
-      // Copy information function
       function copyInfo() {
         if (!pickupCoords || !destinationCoords) {
           alert("Please ensure both pickup and destination locations are available.");
@@ -228,12 +205,10 @@
       }
     </script>
 
-    <!-- Google Maps JavaScript and Places Library -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"></script>
   </body>
 </html>
 
-    
 
 
 
