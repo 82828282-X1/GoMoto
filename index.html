@@ -44,14 +44,6 @@
       #info {
         margin-top: 10px;
       }
-      #manualCopy {
-        display: none;
-        padding: 10px;
-        border: 1px solid #ddd;
-        margin-top: 10px;
-        border-radius: 5px;
-        background-color: #fffbe6;
-      }
     </style>
   </head>
   <body>
@@ -71,7 +63,6 @@
     <div id="info">
       <p id="distance">Distance: Calculating...</p>
       <button class="btn" onclick="copyInfo()">Copy Information</button>
-      <div id="manualCopy"></div>
     </div>
 
     <script>
@@ -101,7 +92,7 @@
             addMarker(map, pickupCoords, "Pickup Location", true);
             map.setCenter(pickupCoords);
           }, (error) => {
-            alert("Location access denied. Please enable location permissions in your browser settings.");
+            alert("Location access denied. Please enable location permissions.");
           });
         } else {
           alert("Geolocation is not supported by this browser.");
@@ -199,17 +190,11 @@
         const infoText = `${pickupText}\n${destinationText}\n${distanceText}`;
         navigator.clipboard.writeText(infoText).then(() => {
           alert("Information copied to clipboard!");
-        }).catch(() => {
-          // Fallback for manual copying
-          document.getElementById("manualCopy").innerText = infoText;
-          document.getElementById("manualCopy").style.display = "block";
-          alert("Manual copy: Long press to select and copy the text.");
         });
       }
     </script>
-    
+   
     <!-- Google Maps JavaScript and Places Library -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback
-
-    
-
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"></script>
+  </body>
+</html>
