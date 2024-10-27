@@ -20,7 +20,7 @@
       }
       .btn {
         padding: 10px 18px;
-        background-color: #F4A261;
+        background-color: #F4A261; /* Yellow-orange color */
         color: #FFFFFF;
         border: none;
         border-radius: 20px;
@@ -31,7 +31,7 @@
         margin: 10px;
       }
       .btn:hover {
-        background-color: #E63946;
+        background-color: #E63946; /* Red color */
       }
       input[type="text"] {
         width: 90%;
@@ -83,10 +83,9 @@
           center: { lat: -15.7861, lng: 35.0058 },
           zoom: 13,
           mapTypeId: "satellite",
-          mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-            mapTypeIds: ["satellite", "roadmap"]
-          }
+          tilt: 45,
+          mapTypeControl: false,
+          streetViewControl: false,
         });
         directionsRenderer.setMap(map);
 
@@ -124,7 +123,7 @@
           position: position,
           map: map,
           title: title,
-          icon: isPickup ? "http://maps.google.com/mapfiles/ms/icons/orange-dot.png" : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+          icon: isPickup ? "https://maps.google.com/mapfiles/kml/shapes/arrow.png" : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
         });
       }
 
@@ -135,8 +134,14 @@
         destinationMarker = new google.maps.Marker({
           position: location,
           map: map,
-          title: "Destination",
+          draggable: true,
+          title: "Drag to adjust destination",
           icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+        });
+
+        destinationMarker.addListener("dragend", () => {
+          destinationCoords = destinationMarker.getPosition();
+          calculateRoute();
         });
 
         destinationCoords = location;
