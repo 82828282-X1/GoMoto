@@ -18,28 +18,33 @@
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
+      .btn, input[type="text"], select {
+        padding: 10px;
+        border-radius: 20px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s;
+        height: 50px;
+      }
+      input[type="text"] {
+        width: calc(70% - 5px);
+        margin-top: 5px;
+      }
       .btn {
-        padding: 10px 18px;
+        width: calc(30% - 5px);
         background-color: #F4A261;
         color: #FFFFFF;
         border: none;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 14px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: background-color 0.3s;
-        margin: 10px;
       }
       .btn:hover {
         background-color: #E63946;
       }
-      input[type="text"] {
-        width: 90%;
-        padding: 10px;
-        margin-top: 5px;
-        border-radius: 20px;
-        border: 1px solid #ccc;
-        font-size: 14px;
+      select {
+        width: calc(30% - 5px);
+        margin-left: 5px;
+        background-color: white;
       }
       #info {
         margin-top: 10px;
@@ -52,19 +57,34 @@
         border-radius: 5px;
         background-color: #fffbe6;
       }
+      .input-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+      }
     </style>
   </head>
   <body>
-    <label>Pickup Location (Detected):</label>
-    <input type="text" id="pickupLocation" placeholder="Detecting current location..." readonly><br>
+    <div class="input-container">
+      <input type="text" id="pickupLocation" placeholder="Enter or select pickup location">
+      <button class="btn" onclick="useCurrentLocation()">Current<br>Location</button>
+    </div>
 
-    <label>Destination:</label>
-    <input type="text" id="destination" placeholder="Enter destination address"><br>
+    <div class="input-container">
+      <input type="text" id="destination" placeholder="Enter destination address">
+      <select id="vehicleType" onchange="calculateRoute()">
+        <option value="car">🚗 Car</option>
+        <option value="motorcycle">🏍️ Motorcycle</option>
+      </select>
+    </div>
 
     <div id="map"></div>
 
     <div id="info">
       <p id="distance">Distance: Calculating...</p>
+      <p id="price">Price: Calculating...</p>
       <button class="btn" onclick="copyInfo()">Copy Information</button>
       <div id="manualCopy"></div>
     </div>
@@ -87,50 +107,66 @@
         map = new google.maps.Map(document.getElementById("map"), {
           center: { lat: -15.7861, lng: 35.0058 },
           zoom: 13,
-          mapTypeId: "hybrid", // Hybrid mode to show satellite view with labels
+          mapTypeId: "hybrid",
         });
         directionsRenderer.setMap(map);
 
-        if (navigator.geolocation) {
-          navigator.geolocation.watchPosition(updatePickupLocation, (error) => {
-            alert("Location access denied. Please enable location permissions.");
-          });
-        } else {
-          alert("Geolocation is not supported by this browser.");
-        }
-
-        const destinationInput = document.getElementById("destination");
-        const autocomplete = new google.maps.places.Autocomplete(destinationInput);
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          if (!place.geometry || !place.geometry.location) {
-            alert("No details available for input: '" + place.name + "'");
-            return;
+        // Autocomplete for pickup location
+        const pickupInput = document.getElementById("pickupLocation");
+        const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput, {
+          componentRestrictions: { country: "MW" },
+        });
+        pickupAutocomplete.addListener("place_changed", () => {
+          const place = pickupAutocomplete.getPlace();
+          if (place.geometry && place.geometry.location) {
+            setPickupLocation(place.geometry.location);
           }
-          destinationCoords = place.geometry.location;
-          setDestination(destinationCoords);
         });
 
-        if (window.DeviceOrientationEvent) {
-          window.addEventListener('deviceorientation', updateMarkerRotation);
+        // Autocomplete for destination
+        const destinationInput = document.getElementById("destination");
+        const destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput, {
+          componentRestrictions: { country: "MW" },
+        });
+        destinationAutocomplete.addListener("place_changed", () => {
+          const place = destinationAutocomplete.getPlace();
+          if (place.geometry && place.geometry.location) {
+            setDestination(place.geometry.location);
+          }
+        });
+      }
+
+      function useCurrentLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const coords = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              };
+              setPickupLocation(coords);
+            },
+            () => {
+              alert("Unable to access your location. Please check location permissions.");
+            },
+            { enableHighAccuracy: true }
+          );
+        } else {
+          alert("Geolocation is not supported by your browser.");
         }
       }
 
-      function updatePickupLocation(position) {
-        const coords = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        
+      function setPickupLocation(coords) {
         document.getElementById("pickupLocation").value = `Lat: ${coords.lat.toFixed(5)}, Lng: ${coords.lng.toFixed(5)}`;
-        
+        const iconUrl = "https://maps.google.com/mapfiles/ms/icons/orange-dot.png";
+
         if (!pickupMarker) {
           pickupMarker = new google.maps.Marker({
             position: coords,
             map: map,
             title: "Pickup Location",
             icon: {
-              url: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Map_marker_icon_-_Orange.svg/120px-Map_marker_icon_-_Orange.svg.png",
+              url: iconUrl,
               scaledSize: new google.maps.Size(40, 40),
             },
           });
@@ -139,38 +175,25 @@
         }
 
         map.setCenter(coords);
-      }
-
-      function updateMarkerRotation(event) {
-        if (pickupMarker && event.alpha !== null) {
-          const rotation = event.alpha;
-          pickupMarker.setIcon({
-            url: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Map_marker_icon_-_Orange.svg/120px-Map_marker_icon_-_Orange.svg.png",
-            scaledSize: new google.maps.Size(40, 40),
-            rotation: rotation // Using rotation property to indicate direction
-          });
-        }
+        calculateRoute();
       }
 
       function setDestination(location) {
-        if (destinationMarker) {
-          destinationMarker.setMap(null);
-        }
-        destinationMarker = new google.maps.Marker({
-          position: location,
-          map: map,
-          draggable: true,
-          title: "Drag to adjust destination",
-          icon: {
-            url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-            scaledSize: new google.maps.Size(40, 40),
-          }
-        });
+        document.getElementById("destination").value = `Lat: ${location.lat().toFixed(5)}, Lng: ${location.lng().toFixed(5)}`;
 
-        destinationMarker.addListener("dragend", () => {
-          destinationCoords = destinationMarker.getPosition();
-          calculateRoute();
-        });
+        if (!destinationMarker) {
+          destinationMarker = new google.maps.Marker({
+            position: location,
+            map: map,
+            title: "Destination Location",
+            icon: {
+              url: "https://maps.google.com/mapfiles/ms/icons/orange-dot.png",
+              scaledSize: new google.maps.Size(40, 40),
+            },
+          });
+        } else {
+          destinationMarker.setPosition(location);
+        }
 
         destinationCoords = location;
         calculateRoute();
@@ -178,7 +201,6 @@
 
       function calculateRoute() {
         if (!pickupMarker || !destinationCoords) {
-          alert("Please ensure both pickup and destination locations are available.");
           return;
         }
 
@@ -192,12 +214,21 @@
             if (status === 'OK') {
               directionsRenderer.setDirections(response);
               const distanceText = response.routes[0].legs[0].distance.text;
+              const distanceValue = response.routes[0].legs[0].distance.value / 1000; // Convert to kilometers
               document.getElementById("distance").innerText = `Distance: ${distanceText}`;
+              calculatePrice(distanceValue);
             } else {
               alert("Could not calculate route: " + status);
             }
           }
         );
+      }
+
+      function calculatePrice(distance) {
+        const vehicleType = document.getElementById("vehicleType").value;
+        let pricePerKm = vehicleType === "car" ? 1500 : 1000;
+        let totalPrice = pricePerKm * distance;
+        document.getElementById("price").innerText = `Price: MK ${totalPrice.toFixed(2)}`;
       }
 
       function copyInfo() {
@@ -206,11 +237,14 @@
           return;
         }
 
+        const vehicleType = document.getElementById("vehicleType").value;
         const pickupText = `Pickup Location: Lat ${pickupMarker.getPosition().lat().toFixed(5)}, Lng ${pickupMarker.getPosition().lng().toFixed(5)}`;
         const destinationText = `Destination Location: Lat ${destinationCoords.lat().toFixed(5)}, Lng ${destinationCoords.lng().toFixed(5)}`;
         const distanceText = document.getElementById("distance").innerText;
+        const priceText = document.getElementById("price").innerText;
+        const googleMapsLink = `https://www.google.com/maps/dir/${pickupMarker.getPosition().lat()},${pickupMarker.getPosition().lng()}/${destinationCoords.lat()},${destinationCoords.lng()}`;
 
-        const infoText = `${pickupText}\n${destinationText}\n${distanceText}`;
+        const infoText = `${pickupText}\n${destinationText}\n${distanceText}\n${priceText}\nVehicle Type: ${vehicleType}\nGoogle Maps Link: ${googleMapsLink}`;
         navigator.clipboard.writeText(infoText).then(() => {
           alert("Information copied to clipboard!");
         }).catch(() => {
@@ -220,7 +254,7 @@
         });
       }
     </script>
-   
+
     <!-- Google Maps JavaScript and Places Library -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"></script>
   </body>
