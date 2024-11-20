@@ -6,111 +6,120 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        text-align: center;
-        padding: 5px;
+        margin: 0;
+        padding: 0;
         background-color: #f9f9f9;
         color: #333;
       }
 
-      #map {
-        height: 400px;
+      .input-container {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin: 5px 10px;
+      }
+
+      label {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 3px;
+        text-align: left;
+      }
+
+      input[type="text"] {
         width: 100%;
-        margin-top: 5px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        font-size: 16px;
       }
 
       .btn {
-        width: 140px;
-        padding: 0 15px;
+        width: 110px;
+        height: 40px;
+        padding: 0;
         background-color: #F4A261;
-        color: #FFFFFF;
+        color: #FFF;
         border: none;
         border-radius: 20px;
         cursor: pointer;
-        font-size: 16px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         transition: background-color 0.3s;
-        margin: 4px;
-        height: 50px;
-        line-height: 50px;
-        text-align: center;
+        margin-top: 5px;
       }
 
       .btn:hover {
         background-color: #E63946;
       }
 
-      .input-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: 5px;
-        gap: 10px;
-      }
-
-      input[type="text"] {
-        width: 65%;
-        padding: 0 15px;
-        border-radius: 20px;
-        border: 1px solid #ccc;
-        font-size: 18px;
-        height: 50px;
-        line-height: 50px;
-      }
-
-      #info-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 10px;
-        padding: 10px;
-        border: 1px solid #ccc;
+      #map {
+        height: 400px;
+        width: 100%;
+        margin: 5px 0;
         border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      #info-text {
-        flex-grow: 1;
-        text-align: left;
-        font-size: 16px;
-        padding-left: 10px;
       }
 
       .vehicle-selection {
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 20px;
+        gap: 10px;
+        margin-top: 5px;
       }
 
       .vehicle-option {
-        padding: 10px 20px;
-        border-radius: 20px;
+        padding: 10px;
         border: 2px solid #ccc;
+        border-radius: 20px;
         cursor: pointer;
         font-size: 18px;
-        transition: background-color 0.3s, border-color 0.3s;
+        transition: border-color 0.3s, background-color 0.3s;
       }
 
       .vehicle-option.selected {
         background-color: #F4A261;
-        color: #fff;
+        color: #FFF;
         border-color: #E63946;
       }
 
       .vehicle-option:hover {
         border-color: #F4A261;
       }
+
+      #info-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        margin: 5px 10px;
+        background-color: #FFF;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      #info-text {
+        font-size: 14px;
+        text-align: left;
+        flex: 1;
+        margin-right: 10px;
+      }
     </style>
   </head>
   <body>
+    <!-- Input for pickup location -->
     <div class="input-container">
+      <label for="dropOffInput">Pickup Location:</label>
       <input type="text" id="dropOffInput" placeholder="Enter or select pickup location" autocomplete="off">
       <button class="btn" onclick="useCurrentLocation()">Current Location</button>
     </div>
 
+    <!-- Input for destination -->
     <div class="input-container">
+      <label for="destinationInput">Destination Location:</label>
       <input type="text" id="destinationInput" placeholder="Enter or select destination location" autocomplete="off">
       <div class="vehicle-selection">
         <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')">🚗</div>
@@ -118,8 +127,10 @@
       </div>
     </div>
 
+    <!-- Map -->
     <div id="map"></div>
 
+    <!-- Journey summary and copy button -->
     <div id="info-container">
       <div id="info-text">Your journey summary will appear here...</div>
       <button class="btn" onclick="copyDropOffInfo()">Copy Location</button>
@@ -127,7 +138,7 @@
 
     <script>
       let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
-      let selectedVehicle = 'car';
+      let selectedVehicle = "car";
 
       function initMap() {
         const defaultCoords = { lat: -15.7861, lng: 35.0058 };
@@ -135,17 +146,13 @@
           center: defaultCoords,
           zoom: 13,
           mapTypeId: "satellite",
+          mapTypeControl: true,
           labels: true,
         });
 
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({
-          suppressMarkers: true,
-          polylineOptions: {
-            strokeColor: "#FFFFFF",
-            strokeOpacity: 0.7,
-            strokeWeight: 5,
-          },
+          suppressMarkers: false,
         });
         directionsRenderer.setMap(map);
 
@@ -190,7 +197,8 @@
             },
             () => {
               alert("Unable to access your location. Please check location permissions.");
-            }
+            },
+            { enableHighAccuracy: true }
           );
         } else {
           alert("Geolocation is not supported by your browser.");
@@ -202,13 +210,11 @@
           pickupMarker = new google.maps.Marker({
             position: location,
             map: map,
-            draggable: true,
-            title: "Drag to set pickup location",
+            title: "Pickup Location",
           });
         } else {
           pickupMarker.setPosition(location);
         }
-        map.setCenter(location);
         calculateRoute();
       }
 
@@ -217,13 +223,11 @@
           destinationMarker = new google.maps.Marker({
             position: location,
             map: map,
-            draggable: true,
-            title: "Drag to set destination location",
+            title: "Destination Location",
           });
         } else {
           destinationMarker.setPosition(location);
         }
-        map.setCenter(location);
         calculateRoute();
       }
 
@@ -243,7 +247,9 @@
               const distanceText = leg.distance.text;
               const distanceValue = leg.distance.value / 1000;
               const price = (selectedVehicle === "car" ? 1500 : 1000) * distanceValue;
-              document.getElementById("info-text").innerText = `Distance: ${distanceText}, Price: MK ${price.toFixed(2)}, Vehicle: ${selectedVehicle}`;
+              document.getElementById("info-text").innerText = `Mode: ${
+                selectedVehicle === "car" ? "Car" : "Motorcycle"
+              }, Distance: ${distanceText}, Price: MK ${price.toFixed(2)}`;
             } else {
               alert("Failed to calculate route.");
             }
@@ -271,6 +277,10 @@
       }
     </script>
 
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"></script>
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"
+    ></script>
   </body>
 </html>
