@@ -6,98 +6,101 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
+        text-align: center;
+        padding: 5px;
         background-color: #f9f9f9;
         color: #333;
       }
 
-      .input-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        margin: 5px;
-      }
-
-      input[type="text"] {
-        width: 68%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 20px;
-        font-size: 16px;
+      #map {
+        height: 400px;
+        width: 100%;
+        margin-top: 5px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
 
       .btn {
-        width: 110px;
-        height: 40px;
-        padding: 0;
+        width: 140px;
+        padding: 0 15px;
         background-color: #F4A261;
-        color: #FFF;
+        color: #FFFFFF;
         border: none;
         border-radius: 20px;
         cursor: pointer;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        font-size: 16px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         transition: background-color 0.3s;
+        margin: 4px;
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
       }
 
       .btn:hover {
         background-color: #E63946;
       }
 
-      #map {
-        height: 400px;
-        width: 100%;
-        margin: 5px 0;
-        border-radius: 20px;
-      }
-
-      .vehicle-selection {
+      .input-container {
         display: flex;
         justify-content: center;
         align-items: center;
+        margin-top: 5px;
         gap: 10px;
       }
 
-      .vehicle-option {
-        padding: 10px;
-        border: 2px solid #ccc;
+      input[type="text"] {
+        width: 65%;
+        padding: 0 15px;
         border-radius: 20px;
-        cursor: pointer;
+        border: 1px solid #ccc;
         font-size: 18px;
-        transition: border-color 0.3s, background-color 0.3s;
-      }
-
-      .vehicle-option.selected {
-        background-color: #F4A261;
-        color: #FFF;
-        border-color: #E63946;
-      }
-
-      .vehicle-option:hover {
-        border-color: #F4A261;
+        height: 50px;
+        line-height: 50px;
       }
 
       #info-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 5px;
+        margin-top: 10px;
+        padding: 10px;
         border: 1px solid #ccc;
         border-radius: 10px;
-        margin: 5px;
-        background-color: #FFF;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       #info-text {
-        font-size: 14px;
+        flex-grow: 1;
         text-align: left;
-        flex: 1;
-        margin-right: 10px;
+        font-size: 16px;
+        padding-left: 10px;
+      }
+
+      .vehicle-selection {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .vehicle-option {
+        padding: 10px 20px;
+        border-radius: 20px;
+        border: 2px solid #ccc;
+        cursor: pointer;
+        font-size: 18px;
+        transition: background-color 0.3s, border-color 0.3s;
+      }
+
+      .vehicle-option.selected {
+        background-color: #F4A261;
+        color: #fff;
+        border-color: #E63946;
+      }
+
+      .vehicle-option:hover {
+        border-color: #F4A261;
       }
     </style>
   </head>
@@ -124,7 +127,7 @@
 
     <script>
       let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
-      let selectedVehicle = "car";
+      let selectedVehicle = 'car';
 
       function initMap() {
         const defaultCoords = { lat: -15.7861, lng: 35.0058 };
@@ -132,11 +135,17 @@
           center: defaultCoords,
           zoom: 13,
           mapTypeId: "satellite",
+          labels: true,
         });
 
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({
-          suppressMarkers: false,
+          suppressMarkers: true,
+          polylineOptions: {
+            strokeColor: "#FFFFFF",
+            strokeOpacity: 0.7,
+            strokeWeight: 5,
+          },
         });
         directionsRenderer.setMap(map);
 
@@ -193,11 +202,13 @@
           pickupMarker = new google.maps.Marker({
             position: location,
             map: map,
-            title: "Pickup Location",
+            draggable: true,
+            title: "Drag to set pickup location",
           });
         } else {
           pickupMarker.setPosition(location);
         }
+        map.setCenter(location);
         calculateRoute();
       }
 
@@ -206,11 +217,13 @@
           destinationMarker = new google.maps.Marker({
             position: location,
             map: map,
-            title: "Destination Location",
+            draggable: true,
+            title: "Drag to set destination location",
           });
         } else {
           destinationMarker.setPosition(location);
         }
+        map.setCenter(location);
         calculateRoute();
       }
 
@@ -230,9 +243,7 @@
               const distanceText = leg.distance.text;
               const distanceValue = leg.distance.value / 1000;
               const price = (selectedVehicle === "car" ? 1500 : 1000) * distanceValue;
-              document.getElementById("info-text").innerText = `Mode: ${
-                selectedVehicle === "car" ? "Car" : "Motorcycle"
-              }, Distance: ${distanceText}, Price: MK ${price.toFixed(2)}`;
+              document.getElementById("info-text").innerText = `Distance: ${distanceText}, Price: MK ${price.toFixed(2)}, Vehicle: ${selectedVehicle}`;
             } else {
               alert("Failed to calculate route.");
             }
@@ -260,10 +271,6 @@
       }
     </script>
 
-    <script
-      async
-      defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"
-    ></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap"></script>
   </body>
 </html>
