@@ -1,165 +1,279 @@
-
 <!DOCTYPE html>
 <html>
   <head>
     <title>GoMoto</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
     <style>
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 10px;
-  background-color: #f9f9f9;
-  color: #333;
-  margin: 0;
-}
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 5px;
+        background-color: #f9f9f9;
+        color: #333;
+      }
 
-#map {
-  height: 350px;
-  width: 100%;
-  border-radius: 12px;
-  margin-top: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #ddd;
-}
+      #map {
+        height: 400px;
+        width: 100%;
+        margin-top: 5px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
 
-.input-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-  width: 100%;
-}
+      .btn {
+        width: 140px;
+        padding: 0 15px;
+        background-color: #F4A261;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 16px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s;
+        margin: 4px;
+        height: 50px;
+        line-height: 1.2;
+      }
 
-input[type="text"] {
-  flex: 1;
-  padding: 10px 15px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-  outline: none;
-  transition: border-color 0.3s;
-}
+      .btn:hover {
+        background-color: #E63946;
+      }
 
-input[type="text"]:focus {
-  border-color: #f4a261;
-}
+      .input-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 5px;
+        gap: 10px;
+      }
 
-.btn {
-  height: 40px; /* SAME HEIGHT as the search bars */
-  background-color: #f4a261;
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  font-size: 14px;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  font-weight: bold;
-  line-height: 1.2;
-  flex-shrink: 0;
-  width: calc(30%); /* Matches proportionally with input */
-}
+      input[type="text"] {
+        width: 65%;
+        padding: 0 15px;
+        border-radius: 20px;
+        border: 1px solid #ccc;
+        font-size: 18px;
+        height: 50px;
+        line-height: 50px;
+      }
 
-.btn:hover {
-  background-color: #e63946;
-  transform: scale(1.05);
-}
+      #info-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-.vehicle-selection {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 10px;
-}
+      #info-text {
+        flex-grow: 1;
+        text-align: left;
+        font-size: 16px;
+        padding-left: 10px;
+      }
 
-.vehicle-option {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-  height: 40px; /* SAME HEIGHT as Current Location */
-  background-color: #fff;
-  border: 2px solid #ccc;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 24px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+      .vehicle-selection {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        margin-top: 10px;
+      }
 
-.vehicle-option.selected {
-  background-color: #f4a261;
-  color: #fff;
-  border-color: #e63946;
-}
+      .vehicle-option {
+        padding: 10px 20px;
+        border-radius: 20px;
+        border: 2px solid #ccc;
+        cursor: pointer;
+        font-size: 18px;
+        transition: background-color 0.3s, border-color 0.3s;
+      }
 
-.vehicle-option:hover {
-  border-color: #f4a261;
-  transform: scale(1.05);
-}
+      .vehicle-option.selected {
+        background-color: #F4A261;
+        color: #fff;
+        border-color: #E63946;
+      }
 
-#info {
-  margin-top: 15px;
-  font-size: 14px;
-  text-align: left;
-  padding: 10px 15px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
+      .vehicle-option:hover {
+        border-color: #F4A261;
+      }
     </style>
   </head>
   <body>
+    <!-- Input for pickup location -->
     <div class="input-container">
-      <input
-        type="text"
-        id="dropOffInput"
-        placeholder="Enter pickup location"
-        autocomplete="off"
-      />
-      <button class="btn" onclick="useCurrentLocation()">Current Location</button>
+      <input type="text" id="dropOffInput" placeholder="Enter or select pickup location" autocomplete="off">
+      <button class="btn" onclick="useCurrentLocation()">Current<br>Location</button>
     </div>
 
+    <!-- Input for destination -->
     <div class="input-container">
-      <input
-        type="text"
-        id="destinationInput"
-        placeholder="Enter destination location"
-        autocomplete="off"
-      />
+      <input type="text" id="destinationInput" placeholder="Enter or select destination location" autocomplete="off">
       <div class="vehicle-selection">
         <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')">🚗</div>
         <div id="motorcycleOption" class="vehicle-option" onclick="selectVehicle('motorcycle')">🏍️</div>
       </div>
     </div>
 
+    <!-- Map -->
     <div id="map"></div>
 
-    <div id="info">
-      <p id="journeySummary">Your journey summary will appear here...</p>
-    </div>
-
-    <div class="action-buttons">
-      <button class="btn" onclick="copyDropOffInfo()">Copy Drop-Off Location</button>
-      <button class="btn" onclick="pasteInfoIntoChat()">Paste Info into Chat</button>
+    <!-- Journey summary and copy button -->
+    <div id="info-container">
+      <div id="info-text">Your journey summary will appear here...</div>
+      <button class="btn" onclick="copyDropOffInfo()">Copy Location</button>
     </div>
 
     <script>
-      // JavaScript code remains unchanged...
+      let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
+      let selectedVehicle = 'car';
+
+      function initMap() {
+        const defaultCoords = { lat: -15.7861, lng: 35.0058 };
+        map = new google.maps.Map(document.getElementById("map"), {
+          center: defaultCoords,
+          zoom: 13,
+          mapTypeId: "hybrid",
+        });
+
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+          suppressMarkers: true,
+          polylineOptions: {
+            strokeColor: "#FFFFFF",
+            strokeOpacity: 0.7,
+            strokeWeight: 5,
+          },
+        });
+        directionsRenderer.setMap(map);
+
+        const dropOffInput = document.getElementById("dropOffInput");
+        autocompletePickup = new google.maps.places.Autocomplete(dropOffInput, {
+          componentRestrictions: { country: "MW" },
+        });
+
+        const destinationInput = document.getElementById("destinationInput");
+        autocompleteDestination = new google.maps.places.Autocomplete(destinationInput, {
+          componentRestrictions: { country: "MW" },
+        });
+
+        autocompletePickup.addListener("place_changed", () => {
+          const place = autocompletePickup.getPlace();
+          if (place.geometry && place.geometry.location) {
+            setPickupMarker(place.geometry.location);
+          } else {
+            alert("Invalid place selected. Please try again.");
+          }
+        });
+
+        autocompleteDestination.addListener("place_changed", () => {
+          const place = autocompleteDestination.getPlace();
+          if (place.geometry && place.geometry.location) {
+            setDestinationMarker(place.geometry.location);
+          } else {
+            alert("Invalid place selected. Please try again.");
+          }
+        });
+      }
+
+      function useCurrentLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const coords = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+              };
+              setPickupMarker(coords);
+            },
+            () => {
+              alert("Unable to access your location. Please check location permissions.");
+            }
+          );
+        } else {
+          alert("Geolocation is not supported by your browser.");
+        }
+      }
+
+      function setPickupMarker(location) {
+        if (!pickupMarker) {
+          pickupMarker = new google.maps.Marker({
+            position: location,
+            map: map,
+            draggable: true,
+            title: "Drag to set pickup location",
+          });
+        } else {
+          pickupMarker.setPosition(location);
+        }
+        map.setCenter(location);
+        calculateRoute();
+      }
+
+      function setDestinationMarker(location) {
+        if (!destinationMarker) {
+          destinationMarker = new google.maps.Marker({
+            position: location,
+            map: map,
+            draggable: true,
+            title: "Drag to set destination location",
+          });
+        } else {
+          destinationMarker.setPosition(location);
+        }
+        map.setCenter(location);
+        calculateRoute();
+      }
+
+      function calculateRoute() {
+        if (!pickupMarker || !destinationMarker) return;
+
+        directionsService.route(
+          {
+            origin: pickupMarker.getPosition(),
+            destination: destinationMarker.getPosition(),
+            travelMode: google.maps.TravelMode.DRIVING,
+          },
+          (response, status) => {
+            if (status === "OK") {
+              directionsRenderer.setDirections(response);
+              const leg = response.routes[0].legs[0];
+              const distanceText = leg.distance.text;
+              const distanceValue = leg.distance.value / 1000;
+              const price = (selectedVehicle === "car" ? 1500 : 1000) * distanceValue;
+              document.getElementById("info-text").innerText = `Distance: ${distanceText}, Price: MK ${price.toFixed(2)}`;
+            } else {
+              alert("Failed to calculate route.");
+            }
+          }
+        );
+      }
+
+      function copyDropOffInfo() {
+        if (!pickupMarker || !destinationMarker) {
+          alert("Set both pickup and destination points first.");
+          return;
+        }
+
+        const pickup = pickupMarker.getPosition();
+        const destination = destinationMarker.getPosition();
+        const info = `Pickup: ${pickup.lat()}, ${pickup.lng()}\nDestination: ${destination.lat()}, ${destination.lng()}`;
+        navigator.clipboard.writeText(info).then(() => alert("Copied to clipboard!"));
+      }
+
+      function selectVehicle(vehicle) {
+        selectedVehicle = vehicle;
+        document.querySelectorAll(".vehicle-option").forEach((el) => el.classList.remove("selected"));
+        document.getElementById(vehicle + "Option").classList.add("selected");
+        calculateRoute();
+      }
     </script>
 
-    <!-- Google Maps JavaScript and Places Library -->
-    <script
-      async
-      defer
-      src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap"
-    ></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap"></script>
   </body>
 </html>
-
-
