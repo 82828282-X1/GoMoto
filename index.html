@@ -19,7 +19,7 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
       .btn {
-        width: 25%;
+        width: 155px;
         padding: 0 15px;
         background-color: #F4A261;
         color: #FFFFFF;
@@ -52,18 +52,7 @@
         height: 50px;
         line-height: 50px;
       }
-      select {
-        width: 25%;
-        padding: 10px;
-        border-radius: 20px;
-        border: 1px solid #ccc;
-        font-size: 18px;
-        height: 50px;
-        background-color: white;
-        cursor: pointer;
-      }
       #info {
-        
         display: flex;
         justify-content: center;
         align-items: center;
@@ -72,6 +61,29 @@
       }
       #info p {
         margin: 0;
+      }
+      .vehicle-selection {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        margin-top: 10px;
+      }
+      .vehicle-option {
+        padding: 10px 20px;
+        border-radius: 20px;
+        border: 2px solid #ccc;
+        cursor: pointer;
+        font-size: 18px;
+        transition: background-color 0.3s, border-color 0.3s;
+      }
+      .vehicle-option.selected {
+        background-color: #F4A261;
+        color: #fff;
+        border-color: #E63946;
+      }
+      .vehicle-option:hover {
+        border-color: #F4A261;
       }
     </style>
   </head>
@@ -83,13 +95,16 @@
 
     <div class="input-container">
       <input type="text" id="destinationInput" placeholder="Enter or select destination location" autocomplete="off">
-      <select id="vehicleType" onchange="calculateRoute()">
-        <option value="car">🚗 Car</option>
-        <option value="motorcycle">🏍️ Motorcycle</option>
-      </select>
+          <div class="vehicle-selection">
+      <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')"> 🚗 </div>
+      <div id="motorcycleOption" class="vehicle-option" onclick="selectVehicle('motorcycle')"> 🏍️ </div>
+    </div>
     </div>
 
+    
+    
     <div id="map"></div>
+
 
     <div id="info">
       <p id="distance">Distance: Calculating...</p>
@@ -99,6 +114,7 @@
 
     <script>
       let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
+      let selectedVehicle = 'car';
 
       function initMap() {
         // Initialize the map centered on Blantyre, Malawi
@@ -260,8 +276,7 @@
       }
 
       function calculatePrice(distance) {
-        const vehicleType = document.getElementById("vehicleType").value;
-        let pricePerKm = vehicleType === "car" ? 1500 : 1000;
+        let pricePerKm = selectedVehicle === "car" ? 1500 : 1000;
         let totalPrice = pricePerKm * distance;
         document.getElementById("price").innerText = `Price: MK ${totalPrice.toFixed(2)}`;
       }
@@ -276,16 +291,27 @@
         const destinationCoords = destinationMarker.getPosition();
         const distanceText = document.getElementById("distance").innerText;
         const priceText = document.getElementById("price").innerText;
-        const vehicleType = document.getElementById("vehicleType").value;
         const info = `Pickup Location: Lat ${pickupCoords.lat().toFixed(5)}, Lng ${pickupCoords.lng().toFixed(5)}\n` +
                      `Destination Location: Lat ${destinationCoords.lat().toFixed(5)}, Lng ${destinationCoords.lng().toFixed(5)}\n` +
-                     `${distanceText}\n${priceText}\nVehicle Type: ${vehicleType}\n` +
+                     `${distanceText}\n${priceText}\nVehicle Type: ${selectedVehicle}\n` +
                      `Google Maps Link: https://www.google.com/maps/dir/${pickupCoords.lat()},${pickupCoords.lng()}/${destinationCoords.lat()},${destinationCoords.lng()}`;
         navigator.clipboard.writeText(info).then(() => {
           alert("Information copied to clipboard!");
         }).catch(() => {
           alert("Failed to copy the location. Please try again.");
         });
+      }
+
+      function selectVehicle(vehicle) {
+        selectedVehicle = vehicle;
+        document.getElementById("carOption").classList.remove("selected");
+        document.getElementById("motorcycleOption").classList.remove("selected");
+        if (vehicle === 'car') {
+          document.getElementById("carOption").classList.add("selected");
+        } else {
+          document.getElementById("motorcycleOption").classList.add("selected");
+        }
+        calculateRoute();
       }
     </script>
 
