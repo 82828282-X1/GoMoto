@@ -14,20 +14,14 @@
 
       .input-container {
         display: flex;
-        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         gap: 5px;
-        margin: 5px 10px;
-      }
-
-      label {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 3px;
-        text-align: left;
+        margin: 5px;
       }
 
       input[type="text"] {
-        width: 100%;
+        width: 68%;
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 20px;
@@ -48,7 +42,6 @@
         align-items: center;
         justify-content: center;
         transition: background-color 0.3s;
-        margin-top: 5px;
       }
 
       .btn:hover {
@@ -59,7 +52,7 @@
         height: 400px;
         width: 100%;
         margin: 5px 0;
-        border-radius: 10px;
+        border-radius: 20px;
       }
 
       .vehicle-selection {
@@ -67,7 +60,6 @@
         justify-content: center;
         align-items: center;
         gap: 10px;
-        margin-top: 5px;
       }
 
       .vehicle-option {
@@ -96,7 +88,7 @@
         padding: 5px;
         border: 1px solid #ccc;
         border-radius: 10px;
-        margin: 5px 10px;
+        margin: 5px;
         background-color: #FFF;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
@@ -110,16 +102,12 @@
     </style>
   </head>
   <body>
-    <!-- Input for pickup location -->
     <div class="input-container">
-      <label for="dropOffInput">Pickup Location:</label>
       <input type="text" id="dropOffInput" placeholder="Enter or select pickup location" autocomplete="off">
       <button class="btn" onclick="useCurrentLocation()">Current Location</button>
     </div>
 
-    <!-- Input for destination -->
     <div class="input-container">
-      <label for="destinationInput">Destination Location:</label>
       <input type="text" id="destinationInput" placeholder="Enter or select destination location" autocomplete="off">
       <div class="vehicle-selection">
         <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')">🚗</div>
@@ -127,10 +115,8 @@
       </div>
     </div>
 
-    <!-- Map -->
     <div id="map"></div>
 
-    <!-- Journey summary and copy button -->
     <div id="info-container">
       <div id="info-text">Your journey summary will appear here...</div>
       <button class="btn" onclick="copyDropOffInfo()">Copy Location</button>
@@ -146,8 +132,6 @@
           center: defaultCoords,
           zoom: 13,
           mapTypeId: "satellite",
-          mapTypeControl: true,
-          labels: true,
         });
 
         directionsService = new google.maps.DirectionsService();
@@ -197,8 +181,7 @@
             },
             () => {
               alert("Unable to access your location. Please check location permissions.");
-            },
-            { enableHighAccuracy: true }
+            }
           );
         } else {
           alert("Geolocation is not supported by your browser.");
