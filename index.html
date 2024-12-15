@@ -230,7 +230,7 @@
         } else {
             pickupMarker.setLatLng([location.lat, location.lng]);
         }
-        calculateRoute();
+       calculateRoute();
     }
 
      function setDestinationMarker(location) {
@@ -239,66 +239,64 @@
         } else {
             destinationMarker.setLatLng([location.lat, location.lng]);
         }
-        calculateRoute();
+       calculateRoute();
     }
 
-    function calculateRoute() {
-        if (!pickupMarker || !destinationMarker) {
-            document.getElementById("info-text").innerText = "Set pickup and destination points";
-            return;
-        }
-        const pickupLatLng = pickupMarker.getLatLng();
-        const destinationLatLng = destinationMarker.getLatLng();
+  function calculateRoute() {
+    if (!pickupMarker || !destinationMarker) {
+        document.getElementById("info-text").innerText = "Set pickup and destination points";
+        return;
+    }
+    const pickupLatLng = pickupMarker.getLatLng();
+    const destinationLatLng = destinationMarker.getLatLng();
 
-        directionsService.route(
-            {
-                origin: new google.maps.LatLng(pickupLatLng.lat, pickupLatLng.lng),
-                destination: new google.maps.LatLng(destinationLatLng.lat, destinationLatLng.lng),
-                travelMode: google.maps.TravelMode.DRIVING,
-            },
-            (response, status) => {
-                if (status === 'OK') {
-                    // Clear previous route
-                    if (directionsRenderer) {
-                        directionsRenderer.setMap(null);
+    directionsService.route(
+        {
+            origin: new google.maps.LatLng(pickupLatLng.lat, pickupLatLng.lng),
+            destination: new google.maps.LatLng(destinationLatLng.lat, destinationLatLng.lng),
+            travelMode: google.maps.TravelMode.DRIVING,
+        },
+        (response, status) => {
+            if (status === 'OK') {
+
+                if (directionsRenderer) {
+                    directionsRenderer.setMap(null);
+                 }
+                directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: null,
+                    suppressMarkers: true,
+                     polylineOptions: {
+                        strokeColor: 'blue',
+                        strokeWeight: 5,
                     }
-                    directionsRenderer = new google.maps.DirectionsRenderer({
-                        map: null,
-                        suppressMarkers: true,
-                        polylineOptions: {
-                            strokeColor: 'blue',
-                            strokeWeight: 5,
-                        }
-                    });
-                    directionsRenderer.setMap(new google.maps.Map(document.createElement('div')));
-                    directionsRenderer.setDirections(response);
+                });
+                directionsRenderer.setMap(new google.maps.Map(document.createElement('div')));
+                directionsRenderer.setDirections(response);
 
-                     const route = response.routes[0];
-                     const polyline = route.overview_polyline;
-                     const decodedPath = google.maps.geometry.encoding.decodePath(polyline);
-                     const latLngs = decodedPath.map(latLng => [latLng.lat(), latLng.lng()]);
+                 const route = response.routes[0];
+                const polyline = route.overview_polyline;
+                const decodedPath = google.maps.geometry.encoding.decodePath(polyline);
+                const latLngs = decodedPath.map(latLng => [latLng.lat(), latLng.lng()]);
 
-                     // Draw the polyline
-                    if (map.routePolyline) {
-                        map.removeLayer(map.routePolyline);
-                    }
-                     map.routePolyline = L.polyline(latLngs, {color: 'blue', weight: 5}).addTo(map);
-
-
-                    const leg = response.routes[0].legs[0];
-                    const distanceText = leg.distance.text;
-                    const distanceValue = leg.distance.value / 1000;
-                    const price = (selectedVehicle === "car" ? 1500 : 1000) * distanceValue;
-                   document.getElementById("info-text").innerText = `Mode: ${
-                        selectedVehicle === "car" ? "Car" : "Motorcycle"
-                    }, Distance: ${distanceText}, Price: MK ${price.toFixed(2)}`;
-                } else {
-                      document.getElementById("info-text").innerText = "Failed to calculate route.";
+                 // Draw the polyline
+                if (map.routePolyline) {
+                    map.removeLayer(map.routePolyline);
                 }
-            }
-        );
-    }
+                 map.routePolyline = L.polyline(latLngs, {color: 'blue', weight: 5}).addTo(map);
 
+                 const leg = response.routes[0].legs[0];
+                const distanceText = leg.distance.text;
+                const distanceValue = leg.distance.value / 1000;
+                const price = (selectedVehicle === "car" ? 1500 : 1000) * distanceValue;
+                document.getElementById("info-text").innerText = `Mode: ${
+                    selectedVehicle === "car" ? "Car" : "Motorcycle"
+                }, Distance: ${distanceText}, Price: MK ${price.toFixed(2)}`;
+            } else {
+                   document.getElementById("info-text").innerText = "Failed to calculate route.";
+            }
+        }
+    );
+}
 
     function debounce(func, delay) {
          let timeout;
