@@ -156,14 +156,12 @@
 
         const dropOffInput = document.getElementById("dropOffInput");
         autocompletePickup = new google.maps.places.Autocomplete(dropOffInput, {
-            componentRestrictions: { country: "MW" },
-           types: ['geocode'],
+            componentRestrictions: { country: "MW" }
         });
 
         const destinationInput = document.getElementById("destinationInput");
         autocompleteDestination = new google.maps.places.Autocomplete(destinationInput, {
-          componentRestrictions: { country: "MW" },
-           types: ['geocode'],
+          componentRestrictions: { country: "MW" }
         });
 
            autocompletePickup.addListener("place_changed", () => {
