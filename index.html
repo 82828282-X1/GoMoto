@@ -1,143 +1,144 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <title>GoMoto</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f9f9f9;
-        color: #333;
-      }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
 
-      .input-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        margin: 5px;
-      }
+        .input-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 5px;
+        }
 
-      input[type="text"] {
-        width: 68%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 20px;
-        font-size: 16px;
-      }
+        input[type="text"] {
+            width: 68%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            font-size: 16px;
+        }
 
-      .btn {
-        width: 110px;
-        height: 40px;
-        padding: 0;
-        background-color: #F4A261;
-        color: #FFF;
-        border: none;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.3s;
-      }
+        .btn {
+            width: 110px;
+            height: 40px;
+            padding: 0;
+            background-color: #F4A261;
+            color: #FFF;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
 
-      .btn:hover {
-        background-color: #E63946;
-      }
+        .btn:hover {
+            background-color: #E63946;
+        }
 
-      #map {
-        height: 400px;
-        width: 100%;
-        margin: 5px 0;
-        border-radius: 10px;
-      }
+        #map {
+            height: 400px;
+            width: 100%;
+            margin: 5px 0;
+            border-radius: 10px;
+        }
 
-      .vehicle-selection {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-      }
+        .vehicle-selection {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
 
-      .vehicle-option {
-        padding: 10px;
-        border: 2px solid #ccc;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 18px;
-        transition: border-color 0.3s, background-color 0.3s;
-      }
+        .vehicle-option {
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
 
-      .vehicle-option.selected {
-        background-color: #F4A261;
-        color: #FFF;
-        border-color: #E63946;
-      }
+        .vehicle-option.selected {
+            background-color: #F4A261;
+            color: #FFF;
+            border-color: #E63946;
+        }
 
-      .vehicle-option:hover {
-        border-color: #F4A261;
-      }
+        .vehicle-option:hover {
+            border-color: #F4A261;
+        }
 
-      #info-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 5px;
-        border: 1px solid #ccc;
-        border-radius: 10px;
-        margin: 5px;
-        background-color: #FFF;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
+        #info-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin: 5px;
+            background-color: #FFF;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-      #info-text {
-        font-size: 14px;
-        text-align: left;
-        flex: 1;
-        margin-right: 10px;
-      }
+        #info-text {
+            font-size: 14px;
+            text-align: left;
+            flex: 1;
+            margin-right: 10px;
+        }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
-     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
-  </head>
-  <body>
-    <div class="input-container">
-      <input type="text" id="dropOffInput" placeholder="Enter or select pickup location" autocomplete="off">
-      <button class="btn" onclick="useCurrentLocation()">Current Location</button>
-    </div>
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+</head>
+<body>
+<div class="input-container">
+    <input type="text" id="dropOffInput" placeholder="Enter or select pickup location" autocomplete="off">
+    <button class="btn" onclick="useCurrentLocation()">Current Location</button>
+</div>
 
-    <div class="input-container">
-      <input type="text" id="destinationInput" placeholder="Enter or select destination location" autocomplete="off">
-      <div class="vehicle-selection">
+<div class="input-container">
+    <input type="text" id="destinationInput" placeholder="Enter or select destination location" autocomplete="off">
+    <div class="vehicle-selection">
         <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')">🚗</div>
         <div id="motorcycleOption" class="vehicle-option" onclick="selectVehicle('motorcycle')">🏍️</div>
-      </div>
     </div>
+</div>
 
-    <div id="map"></div>
+<div id="map"></div>
 
-    <div id="info-container">
-      <div id="info-text">Your journey summary will appear here...</div>
-      <button class="btn" onclick="copyDropOffInfo()">Copy Location</button>
-    </div>
+<div id="info-container">
+    <div id="info-text">Your journey summary will appear here...</div>
+    <button class="btn" onclick="copyDropOffInfo()">Copy Location</button>
+</div>
 
-    <script>
-      let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
-      let selectedVehicle = "car";
-      let orangeIcon;
+<script>
+    let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
+    let selectedVehicle = "car";
+    let orangeIcon;
+    let debounceTimer;
 
-      function initMap() {
-        const defaultCoords = { lat: -15.7861, lng: 35.0058 };
+    function initMap() {
+        const defaultCoords = {lat: -15.7861, lng: 35.0058};
         map = L.map('map').setView([defaultCoords.lat, defaultCoords.lng], 13);
 
-         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
@@ -146,119 +147,136 @@
         orangeIcon = L.icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize:    [25, 41],
-            iconAnchor:  [12, 41],
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
             popupAnchor: [1, -34],
-            shadowSize:  [41, 41]
+            shadowSize: [41, 41]
         });
+
 
         const dropOffInput = document.getElementById("dropOffInput");
         autocompletePickup = new google.maps.places.Autocomplete(dropOffInput, {
-            componentRestrictions: { country: "MW" }
+            componentRestrictions: {country: "MW"}
         });
 
         const destinationInput = document.getElementById("destinationInput");
         autocompleteDestination = new google.maps.places.Autocomplete(destinationInput, {
-          componentRestrictions: { country: "MW" }
+            componentRestrictions: {country: "MW"}
         });
 
+
         autocompletePickup.addListener("place_changed", () => {
-          const place = autocompletePickup.getPlace();
-          if (place && place.geometry && place.geometry.location) {
+            const place = autocompletePickup.getPlace();
+            if (place && place.geometry && place.geometry.location) {
                 setPickupMarker(place.geometry.location);
-            } else {
-            alert("Invalid place selected. Please try again.");
-          }
+            }
         });
 
         autocompleteDestination.addListener("place_changed", () => {
-          const place = autocompleteDestination.getPlace();
-            if (place && place.geometry && place.geometry.location) {
-               setDestinationMarker(place.geometry.location);
-            } else {
-            alert("Invalid place selected. Please try again.");
-          }
+            const place = autocompleteDestination.getPlace();
+             if (place && place.geometry && place.geometry.location) {
+                 setDestinationMarker(place.geometry.location);
+            }
         });
 
-         // Add event listeners for input changes to calculate route
-        dropOffInput.addEventListener('input', debounce(() => calculateRoute(), 300));
-        destinationInput.addEventListener('input', debounce(() => calculateRoute(), 300));
-      }
+         dropOffInput.addEventListener('input', debounce(() => handlePickupInput(), 300));
 
-      function useCurrentLocation() {
+
+    }
+
+     function handlePickupInput() {
+       const dropOffInput = document.getElementById('dropOffInput');
+       const inputValue = dropOffInput.value;
+
+        if(inputValue.length < 3) return;
+        const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ 'address': inputValue }, (results, status) => {
+                if (status === 'OK' && results && results.length > 0) {
+
+                     const latLng = results[0].geometry.location;
+                     const coords = {
+                         lat: latLng.lat(),
+                         lng: latLng.lng(),
+                    };
+                    setPickupMarker(coords);
+                 }
+           });
+
+     }
+
+    function useCurrentLocation() {
         if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const coords = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-              };
-              setPickupMarker(coords);
-              map.setView([coords.lat, coords.lng], 13)
-            },
-            () => {
-              alert("Unable to access your location. Please check location permissions.");
-            }
-          );
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const coords = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    setPickupMarker(coords);
+                    map.setView([coords.lat, coords.lng], 13)
+                },
+                () => {
+                    alert("Unable to access your location. Please check location permissions.");
+                }
+            );
         } else {
-          alert("Geolocation is not supported by your browser.");
+            alert("Geolocation is not supported by your browser.");
         }
-      }
+    }
 
      function setPickupMarker(location) {
         if (!pickupMarker) {
-            pickupMarker = L.marker([location.lat, location.lng], {icon: orangeIcon}).addTo(map).bindPopup("Pickup Location");;
+            pickupMarker = L.marker([location.lat, location.lng], {icon: orangeIcon}).addTo(map).bindPopup("Pickup Location");
         } else {
-           pickupMarker.setLatLng([location.lat, location.lng]);
-       }
+            pickupMarker.setLatLng([location.lat, location.lng]);
+        }
         calculateRoute();
-      }
+    }
 
-    function setDestinationMarker(location) {
-          if (!destinationMarker) {
-               destinationMarker = L.marker([location.lat, location.lng], {icon: orangeIcon}).addTo(map).bindPopup("Destination Location");;
+     function setDestinationMarker(location) {
+         if (!destinationMarker) {
+             destinationMarker = L.marker([location.lat, location.lng], {icon: orangeIcon}).addTo(map).bindPopup("Destination Location");
         } else {
             destinationMarker.setLatLng([location.lat, location.lng]);
-          }
+        }
         calculateRoute();
-      }
+    }
 
-     function calculateRoute() {
+    function calculateRoute() {
         if (!pickupMarker || !destinationMarker) {
             document.getElementById("info-text").innerText = "Set pickup and destination points";
             return;
         }
         const pickupLatLng = pickupMarker.getLatLng();
         const destinationLatLng = destinationMarker.getLatLng();
-       directionsService.route(
+
+        directionsService.route(
             {
                 origin: new google.maps.LatLng(pickupLatLng.lat, pickupLatLng.lng),
                 destination: new google.maps.LatLng(destinationLatLng.lat, destinationLatLng.lng),
                 travelMode: google.maps.TravelMode.DRIVING,
             },
             (response, status) => {
-                if (status === "OK") {
-                 // Clear previous route
+                if (status === 'OK') {
+                    // Clear previous route
                     if (directionsRenderer) {
                         directionsRenderer.setMap(null);
                     }
-                     directionsRenderer = new google.maps.DirectionsRenderer({
+                    directionsRenderer = new google.maps.DirectionsRenderer({
                         map: null,
                         suppressMarkers: true,
-                         polylineOptions: {
+                        polylineOptions: {
                             strokeColor: 'blue',
                             strokeWeight: 5,
                         }
-
                     });
-                      directionsRenderer.setMap(new google.maps.Map(document.createElement('div')));
-                      directionsRenderer.setDirections(response);
+                    directionsRenderer.setMap(new google.maps.Map(document.createElement('div')));
+                    directionsRenderer.setDirections(response);
 
-                      const route = response.routes[0];
+                     const route = response.routes[0];
                      const polyline = route.overview_polyline;
-                      const decodedPath = google.maps.geometry.encoding.decodePath(polyline);
-                       const latLngs = decodedPath.map(latLng => [latLng.lat(), latLng.lng()]);
-
+                     const decodedPath = google.maps.geometry.encoding.decodePath(polyline);
+                     const latLngs = decodedPath.map(latLng => [latLng.lat(), latLng.lng()]);
 
                      // Draw the polyline
                     if (map.routePolyline) {
@@ -266,53 +284,54 @@
                     }
                      map.routePolyline = L.polyline(latLngs, {color: 'blue', weight: 5}).addTo(map);
 
+
                     const leg = response.routes[0].legs[0];
                     const distanceText = leg.distance.text;
                     const distanceValue = leg.distance.value / 1000;
                     const price = (selectedVehicle === "car" ? 1500 : 1000) * distanceValue;
-                     document.getElementById("info-text").innerText = `Mode: ${
+                   document.getElementById("info-text").innerText = `Mode: ${
                         selectedVehicle === "car" ? "Car" : "Motorcycle"
                     }, Distance: ${distanceText}, Price: MK ${price.toFixed(2)}`;
                 } else {
-                   document.getElementById("info-text").innerText = "Failed to calculate route.";
+                      document.getElementById("info-text").innerText = "Failed to calculate route.";
                 }
             }
         );
     }
 
-      function debounce(func, delay) {
-            let timeout;
-            return function(...args) {
-              const context = this;
-              clearTimeout(timeout);
-              timeout = setTimeout(() => func.apply(context, args), delay);
-            };
-          }
 
-      function copyDropOffInfo() {
+    function debounce(func, delay) {
+         let timeout;
+         return function(...args) {
+             const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+         };
+     }
+
+    function copyDropOffInfo() {
         if (!pickupMarker || !destinationMarker) {
-          alert("Set both pickup and destination points first.");
-          return;
+            alert("Set both pickup and destination points first.");
+            return;
         }
 
-       const pickup = pickupMarker.getLatLng();
-       const destination = destinationMarker.getLatLng();
+        const pickup = pickupMarker.getLatLng();
+        const destination = destinationMarker.getLatLng();
         const info = `Pickup: ${pickup.lat}, ${pickup.lng}\nDestination: ${destination.lat}, ${destination.lng}`;
         navigator.clipboard.writeText(info).then(() => alert("Copied to clipboard!"));
-      }
+    }
 
-      function selectVehicle(vehicle) {
+    function selectVehicle(vehicle) {
         selectedVehicle = vehicle;
         document.querySelectorAll(".vehicle-option").forEach((el) => el.classList.remove("selected"));
         document.getElementById(vehicle + "Option").classList.add("selected");
         calculateRoute();
-      }
-    </script>
+    }
+</script>
 
-    <script
-      async
-      defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places,geocoding,geometry&callback=initMap"
-    ></script>
-  </body>
+<script
+        async
+        defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places,geocoding,geometry&callback=initMap"></script>
+</body>
 </html>
