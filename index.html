@@ -178,6 +178,7 @@
                 lng: position.coords.longitude,
               };
               setPickupMarker(coords);
+              map.setCenter(coords); // Center the map on the current location
             },
             () => {
               alert("Unable to access your location. Please check location permissions.");
