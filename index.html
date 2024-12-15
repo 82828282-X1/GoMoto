@@ -100,7 +100,7 @@
         margin-right: 10px;
       }
     </style>
-       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -135,16 +135,15 @@
 
       function initMap() {
         const defaultCoords = { lat: -15.7861, lng: 35.0058 };
-           map = L.map('map').setView([defaultCoords.lat, defaultCoords.lng], 13);
+        map = L.map('map').setView([defaultCoords.lat, defaultCoords.lng], 13);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-
         directionsService = new google.maps.DirectionsService();
 
-           orangeIcon = L.icon({
+        orangeIcon = L.icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
             iconSize:    [25, 41],
@@ -152,7 +151,6 @@
             popupAnchor: [1, -34],
             shadowSize:  [41, 41]
         });
-
 
         const dropOffInput = document.getElementById("dropOffInput");
         autocompletePickup = new google.maps.places.Autocomplete(dropOffInput, {
@@ -164,29 +162,27 @@
           componentRestrictions: { country: "MW" }
         });
 
-           autocompletePickup.addListener("place_changed", () => {
-            const place = autocompletePickup.getPlace();
-            if (place.geometry && place.geometry.location) {
+        autocompletePickup.addListener("place_changed", () => {
+          const place = autocompletePickup.getPlace();
+          if (place && place.geometry && place.geometry.location) {
                 setPickupMarker(place.geometry.location);
-              } else {
-                alert("Invalid place selected. Please try again.");
-            }
-          });
-
-        autocompleteDestination.addListener("place_changed", () => {
-          const place = autocompleteDestination.getPlace();
-          if (place.geometry && place.geometry.location) {
-              setDestinationMarker(place.geometry.location);
-          } else {
+            } else {
             alert("Invalid place selected. Please try again.");
           }
         });
 
+        autocompleteDestination.addListener("place_changed", () => {
+          const place = autocompleteDestination.getPlace();
+            if (place && place.geometry && place.geometry.location) {
+               setDestinationMarker(place.geometry.location);
+            } else {
+            alert("Invalid place selected. Please try again.");
+          }
+        });
 
          // Add event listeners for input changes to calculate route
         dropOffInput.addEventListener('input', debounce(() => calculateRoute(), 300));
         destinationInput.addEventListener('input', debounce(() => calculateRoute(), 300));
-
       }
 
       function useCurrentLocation() {
@@ -209,16 +205,16 @@
         }
       }
 
-        function setPickupMarker(location) {
-          if (!pickupMarker) {
-              pickupMarker = L.marker([location.lat, location.lng], {icon: orangeIcon}).addTo(map).bindPopup("Pickup Location");;
+     function setPickupMarker(location) {
+        if (!pickupMarker) {
+            pickupMarker = L.marker([location.lat, location.lng], {icon: orangeIcon}).addTo(map).bindPopup("Pickup Location");;
         } else {
-            pickupMarker.setLatLng([location.lat, location.lng]);
-        }
+           pickupMarker.setLatLng([location.lat, location.lng]);
+       }
         calculateRoute();
       }
 
-      function setDestinationMarker(location) {
+    function setDestinationMarker(location) {
           if (!destinationMarker) {
                destinationMarker = L.marker([location.lat, location.lng], {icon: orangeIcon}).addTo(map).bindPopup("Destination Location");;
         } else {
@@ -227,25 +223,22 @@
         calculateRoute();
       }
 
-
-      function calculateRoute() {
-           if (!pickupMarker || !destinationMarker) {
-                  document.getElementById("info-text").innerText = "Set pickup and destination points";
-                  return;
-          }
-
-          const pickupLatLng = pickupMarker.getLatLng();
-          const destinationLatLng = destinationMarker.getLatLng();
-
-          directionsService.route(
-              {
-                  origin: new google.maps.LatLng(pickupLatLng.lat, pickupLatLng.lng),
-                  destination: new google.maps.LatLng(destinationLatLng.lat, destinationLatLng.lng),
-                  travelMode: google.maps.TravelMode.DRIVING,
-              },
-              (response, status) => {
-                  if (status === 'OK') {
-                       // Clear previous route
+     function calculateRoute() {
+        if (!pickupMarker || !destinationMarker) {
+            document.getElementById("info-text").innerText = "Set pickup and destination points";
+            return;
+        }
+        const pickupLatLng = pickupMarker.getLatLng();
+        const destinationLatLng = destinationMarker.getLatLng();
+       directionsService.route(
+            {
+                origin: new google.maps.LatLng(pickupLatLng.lat, pickupLatLng.lng),
+                destination: new google.maps.LatLng(destinationLatLng.lat, destinationLatLng.lng),
+                travelMode: google.maps.TravelMode.DRIVING,
+            },
+            (response, status) => {
+                if (status === "OK") {
+                 // Clear previous route
                     if (directionsRenderer) {
                         directionsRenderer.setMap(null);
                     }
@@ -261,8 +254,7 @@
                       directionsRenderer.setMap(new google.maps.Map(document.createElement('div')));
                       directionsRenderer.setDirections(response);
 
-
-                       const route = response.routes[0];
+                      const route = response.routes[0];
                      const polyline = route.overview_polyline;
                       const decodedPath = google.maps.geometry.encoding.decodePath(polyline);
                        const latLngs = decodedPath.map(latLng => [latLng.lat(), latLng.lng()]);
@@ -278,17 +270,17 @@
                     const distanceText = leg.distance.text;
                     const distanceValue = leg.distance.value / 1000;
                     const price = (selectedVehicle === "car" ? 1500 : 1000) * distanceValue;
-                    document.getElementById("info-text").innerText = `Mode: ${
+                     document.getElementById("info-text").innerText = `Mode: ${
                         selectedVehicle === "car" ? "Car" : "Motorcycle"
                     }, Distance: ${distanceText}, Price: MK ${price.toFixed(2)}`;
                 } else {
-                    alert('Failed to calculate route: ' + status);
+                   document.getElementById("info-text").innerText = "Failed to calculate route.";
                 }
             }
         );
-      }
+    }
 
-        function debounce(func, delay) {
+      function debounce(func, delay) {
             let timeout;
             return function(...args) {
               const context = this;
@@ -297,15 +289,14 @@
             };
           }
 
-
       function copyDropOffInfo() {
         if (!pickupMarker || !destinationMarker) {
           alert("Set both pickup and destination points first.");
           return;
         }
 
-        const pickup = pickupMarker.getLatLng();
-        const destination = destinationMarker.getLatLng();
+       const pickup = pickupMarker.getLatLng();
+       const destination = destinationMarker.getLatLng();
         const info = `Pickup: ${pickup.lat}, ${pickup.lng}\nDestination: ${destination.lat}, ${destination.lng}`;
         navigator.clipboard.writeText(info).then(() => alert("Copied to clipboard!"));
       }
