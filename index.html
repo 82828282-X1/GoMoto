@@ -125,33 +125,22 @@
 <script>
     let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
     let selectedVehicle = "car";
-    let orangeIcon;
     let debounceTimer;
 
     function initMap() {
-          const defaultCoords = { lat: -15.7861, lng: 35.0058 };
+        const defaultCoords = { lat: -15.7861, lng: 35.0058 };
         map = new google.maps.Map(document.getElementById("map"), {
-          center: defaultCoords,
-          zoom: 13,
-          mapTypeId: "satellite",
+            center: defaultCoords,
+            zoom: 13,
+            mapTypeId: "satellite",
         });
 
-         directionsService = new google.maps.DirectionsService();
+        directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({
-          suppressMarkers: false,
+            suppressMarkers: false,
         });
         directionsRenderer.setMap(map);
 
-
-         orangeIcon = {
-            path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
-             fillColor: '#F4A261',
-              fillOpacity: 1,
-             strokeColor: '#E63946',
-             strokeWeight: 2,
-            scale: 1.5,
-            anchor: new google.maps.Point(12, 24)
-        };
 
         const dropOffInput = document.getElementById("dropOffInput");
         autocompletePickup = new google.maps.places.Autocomplete(dropOffInput, {
@@ -163,43 +152,42 @@
             componentRestrictions: {country: "MW"}
         });
 
-          autocompletePickup.addListener("place_changed", () => {
-          const place = autocompletePickup.getPlace();
-          if (place && place.geometry && place.geometry.location) {
-            setPickupMarker(place.geometry.location);
-          }
+        autocompletePickup.addListener("place_changed", () => {
+            const place = autocompletePickup.getPlace();
+            if (place && place.geometry && place.geometry.location) {
+                setPickupMarker(place.geometry.location);
+            }
         });
 
         autocompleteDestination.addListener("place_changed", () => {
-          const place = autocompleteDestination.getPlace();
-           if (place && place.geometry && place.geometry.location) {
-            setDestinationMarker(place.geometry.location);
-          }
+            const place = autocompleteDestination.getPlace();
+            if (place && place.geometry && place.geometry.location) {
+                setDestinationMarker(place.geometry.location);
+            }
         });
 
-         dropOffInput.addEventListener('input', debounce(() => handlePickupInput(), 300));
-
-
+        dropOffInput.addEventListener('input', debounce(() => handlePickupInput(), 300));
     }
-     function handlePickupInput() {
-       const dropOffInput = document.getElementById('dropOffInput');
-       const inputValue = dropOffInput.value;
 
-        if(inputValue.length < 3) return;
+    function handlePickupInput() {
+        const dropOffInput = document.getElementById('dropOffInput');
+        const inputValue = dropOffInput.value;
+
+        if (inputValue.length < 3) return;
         const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ 'address': inputValue }, (results, status) => {
-                if (status === 'OK' && results && results.length > 0) {
+        geocoder.geocode({ 'address': inputValue }, (results, status) => {
+            if (status === 'OK' && results && results.length > 0) {
 
-                     const latLng = results[0].geometry.location;
-                     const coords = {
-                         lat: latLng.lat(),
-                         lng: latLng.lng(),
-                    };
-                    setPickupMarker(coords);
-                 }
-           });
+                const latLng = results[0].geometry.location;
+                const coords = {
+                    lat: latLng.lat(),
+                    lng: latLng.lng(),
+                };
+                setPickupMarker(coords);
+            }
+        });
+    }
 
-     }
 
     function useCurrentLocation() {
         if (navigator.geolocation) {
@@ -210,7 +198,7 @@
                         lng: position.coords.longitude,
                     };
                     setPickupMarker(coords);
-                      map.setCenter(coords);
+                    map.setCenter(coords);
                 },
                 () => {
                     alert("Unable to access your location. Please check location permissions.");
@@ -221,12 +209,12 @@
         }
     }
 
-     function setPickupMarker(location) {
+    function setPickupMarker(location) {
         if (!pickupMarker) {
             pickupMarker = new google.maps.Marker({
                 position: location,
                 map: map,
-                 icon: orangeIcon,
+                label: 'A',
                 title: "Pickup Location",
             });
         } else {
@@ -235,22 +223,22 @@
         calculateRoute();
     }
 
-     function setDestinationMarker(location) {
+    function setDestinationMarker(location) {
         if (!destinationMarker) {
-           destinationMarker = new google.maps.Marker({
+            destinationMarker = new google.maps.Marker({
                 position: location,
                 map: map,
-                 icon: orangeIcon,
+                 label: 'B',
                 title: "Destination Location",
             });
         } else {
-             destinationMarker.setPosition(location);
+            destinationMarker.setPosition(location);
         }
-       calculateRoute();
+        calculateRoute();
     }
 
-  function calculateRoute() {
-      if (!pickupMarker || !destinationMarker) {
+    function calculateRoute() {
+        if (!pickupMarker || !destinationMarker) {
             document.getElementById("info-text").innerText = "Set pickup and destination points";
             return;
         }
@@ -264,11 +252,11 @@
             },
             (response, status) => {
                 if (status === 'OK') {
-                  directionsRenderer.setDirections(response);
-                  const leg = response.routes[0].legs[0];
-                  const distanceText = leg.distance.text;
-                  const distanceValue = leg.distance.value / 1000;
-                  const price = (selectedVehicle === "car" ? 1500 : 1000) * distanceValue;
+                    directionsRenderer.setDirections(response);
+                    const leg = response.routes[0].legs[0];
+                    const distanceText = leg.distance.text;
+                    const distanceValue = leg.distance.value / 1000;
+                    const price = (selectedVehicle === "car" ? 1500 : 1000) * distanceValue;
                     document.getElementById("info-text").innerText = `Mode: ${
                         selectedVehicle === "car" ? "Car" : "Motorcycle"
                     }, Distance: ${distanceText}, Price: MK ${price.toFixed(2)}`;
@@ -280,13 +268,13 @@
     }
 
     function debounce(func, delay) {
-         let timeout;
-         return function(...args) {
-             const context = this;
+        let timeout;
+        return function(...args) {
+            const context = this;
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(context, args), delay);
-         };
-     }
+        };
+    }
 
     function copyDropOffInfo() {
         if (!pickupMarker || !destinationMarker) {
@@ -307,7 +295,6 @@
         calculateRoute();
     }
 </script>
-
 <script
         async
         defer
