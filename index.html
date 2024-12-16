@@ -187,9 +187,9 @@
 </div>
 
 <script>
-    let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
+    let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService, trafficLayer;
     let selectedVehicle = null;
-    let distance, price;
+    let distance, price, duration;
 
     function initMap() {
         const defaultCoords = { lat: -13.9833, lng: 33.7833 };
@@ -200,8 +200,15 @@
         });
 
         directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            suppressMarkers: true,
+            //polylineOptions: {strokeColor: "#000000"}, // This doesn't work, must implement custom class.
+        });
         directionsRenderer.setMap(map);
+
+        // Initialize traffic layer
+        trafficLayer = new google.maps.TrafficLayer();
+        trafficLayer.setMap(map); // Initially show traffic
 
         autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"), {
             componentRestrictions: { country: "MW" }
@@ -245,7 +252,7 @@
     }
 
     function setMarker(type, location) {
-      const icon = {
+       const icon = {
             url: "https://maps.google.com/mapfiles/kml/paddle/red-circle.png",
            scaledSize: new google.maps.Size(35, 35),
         };
@@ -256,7 +263,7 @@
             pickupMarker = new google.maps.Marker({
                 position: location,
                 map: map,
-                icon: icon
+               icon: icon
             });
             map.panTo(location);
         } else {
@@ -269,46 +276,67 @@
         }
     }
 
-    function calculateRoute() {
+     function calculateRoute() {
         if (!pickupMarker || !destinationMarker || !selectedVehicle) {
             document.getElementById("info-text").innerText = "Please select a pickup and destination location and a mode of transport.";
             return;
         }
-      directionsService.route({
+        directionsService.route({
             origin: pickupMarker.getPosition(),
             destination: destinationMarker.getPosition(),
             travelMode: "DRIVING",
-       }, (response, status) => {
+        }, (response, status) => {
             if (status === "OK") {
-                 directionsRenderer.setDirections(response);
-                 const leg = response.routes[0].legs[0];
+                directionsRenderer.setDirections(response);
+                const leg = response.routes[0].legs[0];
                 distance = leg.distance.text;
                 price = (selectedVehicle === "car" ? 1500 : 1000) * (leg.distance.value / 1000);
-                document.getElementById("info-text").innerText =
-                    `Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
-            } else {
-                 document.getElementById("info-text").innerText = "Could not calculate route.";
+                 duration = leg.duration.text;
+
+                // Attempt to add duration to the map route
+               directionsRenderer.setOptions({
+                   polylineOptions: {
+                       strokeColor: 'black',
+                    },
+                     // Add a duration label on top of route
+                   directions: response,
+                    routeIndex: 0, // index of route to label
+                     // Custom label function. This is complex and may not be performant.
+                  //    polylineOptions: function(polyline) {
+                 //         return {
+                 //           label: duration,
+                 //           offset: 30,
+                //            repeat: true,
+                //            style: "fill:white;stroke:#000;stroke-width:2px;font: 16px Arial;",
+                  //        }
+                  //    }
+              });
+                 document.getElementById("info-text").innerText =
+                    `Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Est. Time: ${duration}, Price: MK ${price.toFixed(2)}`;
+             } else {
+                document.getElementById("info-text").innerText = "Could not calculate route.";
             }
-        });
+       });
     }
 
 
-  function selectVehicle(vehicle) {
-    const carOption = document.getElementById("carOption");
-    const motorcycleOption = document.getElementById("motorcycleOption");
 
-    if (vehicle === "car") {
-        selectedVehicle = "car";
-        carOption.classList.add("selected");
-        motorcycleOption.classList.remove("selected");
+    function selectVehicle(vehicle) {
+        const carOption = document.getElementById("carOption");
+        const motorcycleOption = document.getElementById("motorcycleOption");
 
-    } else if (vehicle === "motorbike") {
-         selectedVehicle = "motorbike";
-         motorcycleOption.classList.add("selected");
-          carOption.classList.remove("selected");
+        if (vehicle === "car") {
+            selectedVehicle = "car";
+            carOption.classList.add("selected");
+            motorcycleOption.classList.remove("selected");
+
+        } else if (vehicle === "motorbike") {
+            selectedVehicle = "motorbike";
+            motorcycleOption.classList.add("selected");
+            carOption.classList.remove("selected");
+        }
+        calculateRoute();
     }
-     calculateRoute();
-}
 
 
     function displayAnimation() {
@@ -326,8 +354,6 @@
         document.getElementById("driver-icon").src = vehicleIcon;
         document.getElementById("driver-icon").classList.remove("hidden");
     }
-
-
 
     function useCurrentLocation() {
         if (navigator.geolocation) {
@@ -351,10 +377,9 @@
                 }
             );
         } else {
-             handleLocationError(false);
+            handleLocationError(false);
         }
     }
-
 
     function handleLocationError(browserHasGeolocation) {
         document.getElementById("dropOffInput").placeholder = browserHasGeolocation
@@ -365,11 +390,11 @@
    function confirmRide() {
         const paymentMethod = document.getElementById("paymentMethod").value;
         if (!paymentMethod || !pickupMarker || !destinationMarker || !selectedVehicle) {
-           alert("Please complete all fields before confirming the ride.");
+            alert("Please complete all fields before confirming the ride.");
             return;
         }
         const modeOfTransport = selectedVehicle === "car" ? "Car" : "Motorbike";
-        alert(`Ride Confirmed!\n\nMode: ${modeOfTransport}\nDistance: ${distance}\nPrice: MK ${price.toFixed(2)}\nPayment: ${paymentMethod}`);
+        alert(`Ride Confirmed!\n\nMode: ${modeOfTransport}\nDistance: ${distance}\nEst. Time: ${duration}\nPrice: MK ${price.toFixed(2)}\nPayment: ${paymentMethod}`);
         document.getElementById("driver-message").innerText = "Driver on his way!";
         displayAnimation();
     }
