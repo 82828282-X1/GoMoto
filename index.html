@@ -1,181 +1,147 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Moving Vehicles Demo</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places"></script>
+    <title>GoMoto Ride Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
         #map {
-            height: 100vh;
+            height: 60vh;
             width: 100%;
         }
 
-        .popup {
-            text-align: center;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        .input-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 10px;
         }
 
-        .popup img {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 10px;
+        input[type="text"] {
+            width: 65%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            background-color: #F4A261;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #E63946;
         }
     </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places"></script>
 </head>
 <body>
-<div>
-    <input id="pickupInput" type="text" placeholder="Enter pickup location">
-    <input id="dropoffInput" type="text" placeholder="Enter drop-off location">
-    <button onclick="confirmRide()">Confirm Ride</button>
-</div>
-<div id="map"></div>
+    <div class="input-container">
+        <input type="text" id="pickup" placeholder="Enter pickup location" autocomplete="off">
+        <input type="text" id="dropoff" placeholder="Enter drop-off location" autocomplete="off">
+        <button class="btn" onclick="confirmRide()">Confirm Ride</button>
+    </div>
+    <div id="map"></div>
 
 <script>
-    let map;
-    const lilongweCenter = { lat: -13.9833, lng: 33.7833 }; // Lilongwe
-    const vehicles = []; // Array to store vehicles
-    const vehicleIcons = [
-        "http://maps.google.com/mapfiles/ms/icons/red-car.png", // Car icon
-        "http://maps.google.com/mapfiles/ms/icons/motorcycle.png" // Bike icon
-    ];
-    let pickupMarker, dropoffMarker;
+    let map, pickupMarker, dropoffMarker, directionsService, directionsRenderer;
+    let autocompletePickup, autocompleteDropoff;
 
     function initMap() {
+        const lilongweCenter = { lat: -13.9833, lng: 33.7833 }; // Lilongwe Center
         map = new google.maps.Map(document.getElementById("map"), {
             center: lilongweCenter,
             zoom: 14,
         });
 
-        // Initialize autocomplete inputs limited to Malawi
-        const autocompleteOptions = { componentRestrictions: { country: "mw" } };
-        const pickupInput = new google.maps.places.Autocomplete(
-            document.getElementById("pickupInput"),
-            autocompleteOptions
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
+        
+        // Initialize autocomplete for pickup and drop-off
+        autocompletePickup = new google.maps.places.Autocomplete(
+            document.getElementById("pickup"), { componentRestrictions: { country: "MW" } }
         );
 
-        const dropoffInput = new google.maps.places.Autocomplete(
-            document.getElementById("dropoffInput"),
-            autocompleteOptions
+        autocompleteDropoff = new google.maps.places.Autocomplete(
+            document.getElementById("dropoff"), { componentRestrictions: { country: "MW" } }
         );
 
-        // Add listeners to set markers
-        pickupInput.addListener("place_changed", () => {
-            const place = pickupInput.getPlace();
-            if (place.geometry) {
-                setMarker("pickup", place.geometry.location);
-            }
-        });
-
-        dropoffInput.addListener("place_changed", () => {
-            const place = dropoffInput.getPlace();
-            if (place.geometry) {
-                setMarker("dropoff", place.geometry.location);
-            }
-        });
-
-        // Generate random vehicles
-        for (let i = 0; i < 5; i++) {
-            addMovingVehicle();
-        }
+        autocompletePickup.addListener("place_changed", setPickupMarker);
+        autocompleteDropoff.addListener("place_changed", setDropoffMarker);
     }
 
-    // Add a vehicle and make it move
-    function addMovingVehicle() {
-        const startPosition = getRandomPosition();
-        const vehicle = new google.maps.Marker({
-            position: startPosition,
-            map: map,
-            icon: vehicleIcons[Math.floor(Math.random() * vehicleIcons.length)], // Random car/bike icon
-        });
-        vehicles.push(vehicle);
-        moveVehicle(vehicle);
-    }
-
-    // Move vehicle
-    function moveVehicle(vehicle) {
-        const newPosition = getRandomPosition();
-        const animationDuration = 5000; // 5 seconds
-        const startTime = performance.now();
-        const startLatLng = vehicle.getPosition();
-        const endLatLng = new google.maps.LatLng(newPosition.lat, newPosition.lng);
-
-        function animate(time) {
-            const progress = Math.min((time - startTime) / animationDuration, 1);
-            const lat = startLatLng.lat() + (endLatLng.lat() - startLatLng.lat()) * progress;
-            const lng = startLatLng.lng() + (endLatLng.lng() - startLatLng.lng()) * progress;
-
-            vehicle.setPosition(new google.maps.LatLng(lat, lng));
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                moveVehicle(vehicle); // Move to a new position
-            }
-        }
-        requestAnimationFrame(animate);
-    }
-
-    // Random position generator
-    function getRandomPosition() {
-        const latOffset = (Math.random() - 0.5) * 0.05;
-        const lngOffset = (Math.random() - 0.5) * 0.05;
-        return { lat: lilongweCenter.lat + latOffset, lng: lilongweCenter.lng + lngOffset };
-    }
-
-    // Set pickup and dropoff markers
-    function setMarker(type, position) {
-        const icon = {
-            url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
-            labelOrigin: new google.maps.Point(15, 10),
-        };
-        const label = type === "pickup" ? "A" : "B";
-
-        if (type === "pickup") {
+    function setPickupMarker() {
+        const place = autocompletePickup.getPlace();
+        if (place.geometry) {
             if (pickupMarker) pickupMarker.setMap(null);
             pickupMarker = new google.maps.Marker({
-                position,
-                map,
-                icon,
-                label,
+                position: place.geometry.location,
+                map: map,
+                label: "A",
+                title: "Pickup Location",
             });
-        } else {
-            if (dropoffMarker) dropoffMarker.setMap(null);
-            dropoffMarker = new google.maps.Marker({
-                position,
-                map,
-                icon,
-                label,
-            });
+            map.panTo(place.geometry.location);
         }
-        map.panTo(position);
     }
 
-    // Confirmation popup with animated icon
+    function setDropoffMarker() {
+        const place = autocompleteDropoff.getPlace();
+        if (place.geometry) {
+            if (dropoffMarker) dropoffMarker.setMap(null);
+            dropoffMarker = new google.maps.Marker({
+                position: place.geometry.location,
+                map: map,
+                label: "B",
+                title: "Drop-off Location",
+            });
+            map.panTo(place.geometry.location);
+        }
+    }
+
     function confirmRide() {
         if (!pickupMarker || !dropoffMarker) {
-            alert("Please enter both pickup and drop-off locations!");
+            alert("Please enter both pickup and drop-off locations.");
             return;
         }
+        const distance = google.maps.geometry.spherical.computeDistanceBetween(
+            pickupMarker.getPosition(),
+            dropoffMarker.getPosition()
+        ) / 1000; // Convert meters to kilometers
 
-        const popupContent = `
-            <div class="popup">
-                <img src="https://raw.githubusercontent.com/88448844/Driver-/refs/heads/main/driver%202.gif?token=GHSAT0AAAAAAC36UOH77SAQCWM2FR5AZOM2Z27PDFQ" 
-                     alt="Driver on the way">
+        // Display confirmation popup
+        const confirmationMessage = `
+            <div style="text-align: center;">
+                <img src="https://raw.githubusercontent.com/88448844/Driver-/refs/heads/main/driver%202.gif" 
+                     alt="Driver Icon" style="width: 80px; height: 80px;">
                 <h3>Ride Confirmed!</h3>
-                <p>Your driver is on the way!</p>
+                <p><strong>Pickup:</strong> ${document.getElementById("pickup").value}</p>
+                <p><strong>Drop-off:</strong> ${document.getElementById("dropoff").value}</p>
+                <p><strong>Distance:</strong> ${distance.toFixed(2)} km</p>
             </div>
         `;
-        const popup = document.createElement("div");
-        popup.innerHTML = popupContent;
-        document.body.appendChild(popup);
-
-        // Remove popup after 3 seconds
-        setTimeout(() => popup.remove(), 3000);
+        const popup = window.open("", "Ride Confirmation", "width=300,height=400");
+        popup.document.write(confirmationMessage);
+        popup.document.close();
     }
 
     window.onload = initMap;
