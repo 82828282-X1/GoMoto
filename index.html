@@ -103,7 +103,7 @@
             max-width: 600px;
         }
 
-       #confirmation-container {
+        #confirmation-container {
             display: flex;
             justify-content: flex-start;
             align-items: center;
@@ -113,8 +113,7 @@
             overflow: hidden;
         }
 
-
-       #driver-message {
+        #driver-message {
             text-align: left;
             font-size: 14px;
             color: green;
@@ -125,13 +124,13 @@
            text-overflow: ellipsis;
         }
 
+
         #driver-icon {
-             height: 60px;
+            height: 60px;
             width: 60px;
             margin-left: 5px;
            transform: scale(1.5);
         }
-
 
         select {
             width: 90%;
@@ -160,7 +159,7 @@
 <div class="input-container">
     <input type="text" id="destinationInput" placeholder="Enter destination location" autocomplete="off">
     <div class="vehicle-selection">
-        <div id="carOption" class="vehicle-option selected" onclick="selectVehicle('car')">🚗</div>
+        <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')">🚗</div>
         <div id="motorcycleOption" class="vehicle-option" onclick="selectVehicle('motorbike')">🏍️</div>
     </div>
 </div>
@@ -185,174 +184,183 @@
 
 <script>
     let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
-    let selectedVehicle = "car";
+    let selectedVehicle = null; // Initialize to null, no default selection
     let distance, price;
 
 
-    function initMap() {
-         const defaultCoords = { lat: -13.9833, lng: 33.7833 };
-        map = new google.maps.Map(document.getElementById("map"), {
-             center: defaultCoords,
-             zoom: 13,
-             mapTypeId: "roadmap",
+  function initMap() {
+      const defaultCoords = { lat: -13.9833, lng: 33.7833 };
+       map = new google.maps.Map(document.getElementById("map"), {
+            center: defaultCoords,
+            zoom: 13,
+            mapTypeId: "roadmap",
         });
 
        directionsService = new google.maps.DirectionsService();
-       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
-       directionsRenderer.setMap(map);
+        directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+        directionsRenderer.setMap(map);
 
-        autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"), {
+
+       autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"), {
             componentRestrictions: { country: "MW" }
         });
-       autocompletePickup.addListener("place_changed", () => {
-           const place = autocompletePickup.getPlace();
-            if (place && place.geometry) {
-                 setMarker("pickup", place.geometry.location);
+        autocompletePickup.addListener("place_changed", () => {
+            const place = autocompletePickup.getPlace();
+             if (place && place.geometry) {
+               setMarker("pickup", place.geometry.location);
             }
-       });
-
-      autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("destinationInput"), {
-          componentRestrictions: { country: "MW" }
-       });
-       autocompleteDestination.addListener("place_changed", () => {
-            const place = autocompleteDestination.getPlace();
-           if (place && place.geometry) {
-               setMarker("destination", place.geometry.location);
-               calculateRoute();
-           }
         });
 
+        autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("destinationInput"), {
+            componentRestrictions: { country: "MW" }
+        });
+       autocompleteDestination.addListener("place_changed", () => {
+           const place = autocompleteDestination.getPlace();
+            if (place && place.geometry) {
+                setMarker("destination", place.geometry.location);
+                calculateRoute();
+           }
+       });
 
          if (navigator.geolocation) {
-             navigator.geolocation.getCurrentPosition(
-                 (position) => {
-                     const pos = {
-                         lat: position.coords.latitude,
-                         lng: position.coords.longitude,
-                   };
-                     map.setCenter(pos);
-                     setMarker("pickup", pos);
-                 },
-                 () => {
+           navigator.geolocation.getCurrentPosition(
+               (position) => {
+                   const pos = {
+                       lat: position.coords.latitude,
+                       lng: position.coords.longitude,
+                  };
+                  map.setCenter(pos);
+                    setMarker("pickup", pos);
+                },
+                () => {
                      handleLocationError(true);
                 }
-             );
-        } else {
-             handleLocationError(false);
+           );
+      } else {
+            handleLocationError(false);
         }
     }
-
 
     function setMarker(type, location) {
        const icon = {
             url: "https://maps.google.com/mapfiles/kml/paddle/red-circle.png",
-             scaledSize: new google.maps.Size(35, 35),
-      };
+           scaledSize: new google.maps.Size(35, 35),
+        };
 
-       if (type === "pickup") {
+      if (type === "pickup") {
            if (pickupMarker) pickupMarker.setMap(null);
-          pickupMarker = new google.maps.Marker({
-                 position: location,
-                map: map,
-                icon: icon
-            });
-          map.panTo(location);
-        } else {
-           if (destinationMarker) destinationMarker.setMap(null);
-          destinationMarker = new google.maps.Marker({
+            pickupMarker = new google.maps.Marker({
                 position: location,
                map: map,
-               icon: icon
+                icon: icon
+            });
+           map.panTo(location);
+        } else {
+            if (destinationMarker) destinationMarker.setMap(null);
+           destinationMarker = new google.maps.Marker({
+                position: location,
+                map: map,
+                icon: icon
            });
         }
-  }
+    }
 
    function calculateRoute() {
-       if (!pickupMarker || !destinationMarker) return;
-         directionsService.route({
-            origin: pickupMarker.getPosition(),
-             destination: destinationMarker.getPosition(),
-             travelMode: "DRIVING",
+        if (!pickupMarker || !destinationMarker || !selectedVehicle) {
+           document.getElementById("info-text").innerText = "Select a mode of transport.";
+             return;
+       }
+
+      directionsService.route({
+          origin: pickupMarker.getPosition(),
+           destination: destinationMarker.getPosition(),
+           travelMode: "DRIVING",
         }, (response, status) => {
-           if (status === "OK") {
+            if (status === "OK") {
                 directionsRenderer.setDirections(response);
-               const leg = response.routes[0].legs[0];
+                 const leg = response.routes[0].legs[0];
                distance = leg.distance.text;
                 price = (selectedVehicle === "car" ? 1500 : 1000) * (leg.distance.value / 1000);
                  document.getElementById("info-text").innerText =
-                  `Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
-            } else {
-               document.getElementById("info-text").innerText = "Could not calculate route.";
-            }
-       });
-   }
+                     `Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
+           } else {
+                document.getElementById("info-text").innerText = "Could not calculate route.";
+           }
+        });
+    }
 
     function selectVehicle(vehicle) {
-        selectedVehicle = vehicle;
+       selectedVehicle = vehicle;
         document.querySelectorAll(".vehicle-option").forEach(el => el.classList.remove("selected"));
         document.getElementById(vehicle + "Option").classList.add("selected");
         updateRideDetails();
+
     }
 
-  function updateRideDetails(){
-      calculateRoute();
-      displayAnimation();
-  }
+   function updateRideDetails(){
+        calculateRoute();
+       displayAnimation();
+   }
 
-     function displayAnimation() {
-         let vehicleIcon;
+  function displayAnimation() {
+      if (selectedVehicle === null){
+             document.getElementById("driver-icon").src = '';
+              document.getElementById("driver-icon").hidden = true;
+              return;
+      }
+
+      let vehicleIcon;
        if (selectedVehicle === "car") {
             vehicleIcon = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/minicar%202.gif";
        } else if (selectedVehicle === "motorbike") {
-            vehicleIcon = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/motorbike.gif";
+           vehicleIcon = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/motorbike.gif";
         }
-        document.getElementById("driver-icon").src = vehicleIcon;
+       document.getElementById("driver-icon").src = vehicleIcon;
+       document.getElementById("driver-icon").hidden = false;
     }
 
 
    function useCurrentLocation() {
        if (navigator.geolocation) {
-           navigator.geolocation.getCurrentPosition(
-               (position) => {
-                   const pos = {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const pos = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude,
                     };
-                    setMarker("pickup", pos);
-                    map.panTo(pos);
+                   setMarker("pickup", pos);
+                   map.panTo(pos);
                        const geocoder = new google.maps.Geocoder();
-                       geocoder.geocode({ location: pos }, (results, status) => {
+                        geocoder.geocode({ location: pos }, (results, status) => {
                          if (status === "OK" && results[0]) {
                                 document.getElementById("dropOffInput").value = results[0].formatted_address;
                             }
-                      });
-              },
-              () => {
-                   handleLocationError(true);
+                       });
+               },
+               () => {
+                  handleLocationError(true);
                }
-           );
+            );
       } else {
           handleLocationError(false);
         }
-   }
-
+  }
 
    function handleLocationError(browserHasGeolocation) {
-       document.getElementById("dropOffInput").placeholder = browserHasGeolocation
-           ? "Error: The Geolocation service failed."
-           : "Error: Your browser doesn't support geolocation.";
-   }
+        document.getElementById("dropOffInput").placeholder = browserHasGeolocation
+            ? "Error: The Geolocation service failed."
+            : "Error: Your browser doesn't support geolocation.";
+    }
 
     function confirmRide() {
-        const paymentMethod = document.getElementById("paymentMethod").value;
-        if (!paymentMethod || !pickupMarker || !destinationMarker) {
-             alert("Please complete all fields before confirming the ride.");
-           return;
-        }
+       const paymentMethod = document.getElementById("paymentMethod").value;
+        if (!paymentMethod || !pickupMarker || !destinationMarker || !selectedVehicle) {
+            alert("Please complete all fields before confirming the ride.");
+             return;
+       }
         alert(`Ride Confirmed!\n\nDistance: ${distance}\nPrice: MK ${price.toFixed(2)}\nPayment: ${paymentMethod}`);
-         document.getElementById("driver-message").innerText = "Driver on his way!";
-       document.getElementById("driver-icon").hidden = false;
-   }
+      document.getElementById("driver-message").innerText = "Driver on his way!";
+    }
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
 </body>
