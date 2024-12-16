@@ -14,14 +14,13 @@
 
         .input-container {
             display: flex;
-            align-items: center;
             justify-content: center;
             gap: 5px;
-            margin: 5px;
+            margin: 10px;
         }
 
         input[type="text"] {
-            width: 68%;
+            width: 70%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 20px;
@@ -31,16 +30,12 @@
         .btn {
             width: 120px;
             height: 40px;
-            padding: 0;
             background-color: #E63946;
             color: #FFF;
             border: none;
             border-radius: 20px;
             cursor: pointer;
             font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             transition: background-color 0.3s;
         }
 
@@ -51,84 +46,45 @@
         #map {
             height: 400px;
             width: 100%;
-            margin: 5px 0;
-            border-radius: 10px;
-        }
-
-        .vehicle-selection {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .vehicle-option {
-            padding: 10px;
-            border: 2px solid #ccc;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 18px;
-            transition: border-color 0.3s, background-color 0.3s;
-        }
-
-        .vehicle-option.selected {
-            background-color: #F4A261;
-            color: #FFF;
-            border-color: #E63946;
-        }
-
-        .vehicle-option:hover {
-            border-color: #F4A261;
+            margin: 10px 0;
         }
 
         #info-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            margin: 5px;
-            background-color: #FFF;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            gap: 10px;
-        }
-
-        #info-text {
-            font-size: 14px;
             text-align: center;
-            margin-bottom: 5px;
+            margin: 10px;
         }
 
         select {
-            width: 90%;
             padding: 8px;
             font-size: 14px;
             border: 1px solid #ccc;
             border-radius: 10px;
+            width: 90%;
             text-align: center;
+        }
+
+        #confirmation-icon {
+            width: 50px;
+            height: 50px;
+            margin: 10px auto;
+            display: block;
         }
     </style>
 </head>
 <body>
 <div class="input-container">
-    <input type="text" id="dropOffInput" placeholder="Enter pickup location" autocomplete="off">
+    <input type="text" id="dropOffInput" placeholder="Enter pickup location">
     <button class="btn" onclick="useCurrentLocation()">Current Location</button>
 </div>
 
 <div class="input-container">
-    <input type="text" id="destinationInput" placeholder="Enter destination location" autocomplete="off">
-    <div class="vehicle-selection">
-        <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')">🚗</div>
-        <div id="motorcycleOption" class="vehicle-option" onclick="selectVehicle('motorcycle')">🏍️</div>
-    </div>
+    <input type="text" id="destinationInput" placeholder="Enter destination location">
 </div>
 
 <div id="map"></div>
 
 <div id="info-container">
-    <div id="info-text">Your journey summary will appear here...</div>
+    <div id="info-text">Your journey details will appear here...</div>
     <select id="paymentMethod">
         <option value="" disabled selected>Payment Method</option>
         <option value="Cash">Cash</option>
@@ -140,54 +96,77 @@
 </div>
 
 <script>
-    let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
-    let selectedVehicle = "car";
-    let distance, price;
+    let map, pickupMarker, destinationMarker, vehicleMarker;
+    let autocompletePickup, autocompleteDestination;
+    let directionsService, directionsRenderer;
+
+    const vehicleIcon = "http://maps.google.com/mapfiles/ms/icons/cabs.png"; // Replace with car/bike icons
+    const redMarkerIcon = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
 
     function initMap() {
-        const defaultCoords = { lat: -15.7861, lng: 35.0058 };
+        const center = { lat: -13.9833, lng: 33.7833 }; // Default to Lilongwe
         map = new google.maps.Map(document.getElementById("map"), {
-            center: defaultCoords,
+            center: center,
             zoom: 13,
-            mapTypeId: "roadmap",
         });
 
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
         directionsRenderer.setMap(map);
 
-        autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"));
-        autocompletePickup.addListener("place_changed", () => {
-            setPickupMarker(autocompletePickup.getPlace().geometry.location);
+        // Autocomplete restricted to Malawi
+        autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"), {
+            componentRestrictions: { country: "MW" }
         });
 
-        autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("destinationInput"));
+        autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("destinationInput"), {
+            componentRestrictions: { country: "MW" }
+        });
+
+        autocompletePickup.addListener("place_changed", () => {
+            const place = autocompletePickup.getPlace();
+            setMarker(place.geometry.location, "pickup");
+        });
+
         autocompleteDestination.addListener("place_changed", () => {
-            setDestinationMarker(autocompleteDestination.getPlace().geometry.location);
+            const place = autocompleteDestination.getPlace();
+            setMarker(place.geometry.location, "destination");
             calculateRoute();
         });
+    }
+
+    function setMarker(location, type) {
+        const icon = redMarkerIcon;
+        if (type === "pickup") {
+            if (pickupMarker) pickupMarker.setMap(null);
+            pickupMarker = new google.maps.Marker({
+                position: location,
+                map: map,
+                icon: icon,
+                label: "A"
+            });
+        } else if (type === "destination") {
+            if (destinationMarker) destinationMarker.setMap(null);
+            destinationMarker = new google.maps.Marker({
+                position: location,
+                map: map,
+                icon: icon,
+                label: "B"
+            });
+        }
     }
 
     function useCurrentLocation() {
         navigator.geolocation.getCurrentPosition(position => {
             const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
-            setPickupMarker(coords);
+            setMarker(coords, "pickup");
             map.setCenter(coords);
         });
     }
 
-    function setPickupMarker(location) {
-        if (pickupMarker) pickupMarker.setMap(null);
-        pickupMarker = new google.maps.Marker({ position: location, map: map, icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" });
-    }
-
-    function setDestinationMarker(location) {
-        if (destinationMarker) destinationMarker.setMap(null);
-        destinationMarker = new google.maps.Marker({ position: location, map: map, icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" });
-    }
-
     function calculateRoute() {
         if (!pickupMarker || !destinationMarker) return;
+
         directionsService.route({
             origin: pickupMarker.getPosition(),
             destination: destinationMarker.getPosition(),
@@ -196,30 +175,70 @@
             if (status === "OK") {
                 directionsRenderer.setDirections(response);
                 const leg = response.routes[0].legs[0];
-                distance = leg.distance.text;
-                price = (selectedVehicle === "car" ? 1500 : 1000) * (leg.distance.value / 1000);
-                document.getElementById("info-text").innerText = `Mode: ${selectedVehicle === "car" ? "Car" : "Motorcycle"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
+                document.getElementById("info-text").innerText = `Distance: ${leg.distance.text}, Price: MK ${(leg.distance.value / 1000 * 1500).toFixed(2)}`;
             }
         });
-    }
-
-    function selectVehicle(vehicle) {
-        selectedVehicle = vehicle;
-        document.querySelectorAll(".vehicle-option").forEach(el => el.classList.remove("selected"));
-        document.getElementById(vehicle + "Option").classList.add("selected");
-        calculateRoute();
     }
 
     function confirmRide() {
         const paymentMethod = document.getElementById("paymentMethod").value;
         if (!paymentMethod || !pickupMarker || !destinationMarker) {
-            alert("Please complete all fields before confirming the ride.");
+            alert("Please complete all fields.");
             return;
         }
 
-        const message = `🚕 Ride Details:\nPickup: ${document.getElementById("dropOffInput").value}\nDestination: ${document.getElementById("destinationInput").value}\nDistance: ${distance}\nPrice: MK ${price.toFixed(2)}\nPayment Method: ${paymentMethod}`;
-        alert("Demo Confirmed! Ride details:\n" + message);
+        showConfirmationPopup();
+        simulateVehicleToPickup();
     }
+
+    function showConfirmationPopup() {
+        const confirmationPopup = `
+            <div>
+                <img src="https://cdn-icons-png.flaticon.com/512/2907/2907764.png" id="confirmation-icon" alt="Success">
+                <h3>Ride Confirmed!</h3>
+                <p>Your driver is on the way!</p>
+            </div>
+        `;
+        const popup = document.createElement("div");
+        popup.innerHTML = confirmationPopup;
+        popup.style.position = "fixed";
+        popup.style.top = "50%";
+        popup.style.left = "50%";
+        popup.style.transform = "translate(-50%, -50%)";
+        popup.style.background = "#fff";
+        popup.style.padding = "20px";
+        popup.style.borderRadius = "10px";
+        popup.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+        document.body.appendChild(popup);
+
+        setTimeout(() => {
+            popup.remove();
+        }, 3000);
+    }
+
+    function simulateVehicleToPickup() {
+        if (!pickupMarker) return;
+
+        vehicleMarker = new google.maps.Marker({
+            position: { lat: pickupMarker.getPosition().lat() + 0.01, lng: pickupMarker.getPosition().lng() + 0.01 },
+            map: map,
+            icon: vehicleIcon,
+            title: "Driver on the way!"
+        });
+
+        const interval = setInterval(() => {
+            const currentPos = vehicleMarker.getPosition();
+            const nextLat = currentPos.lat() - 0.0001;
+            const nextLng = currentPos.lng() - 0.0001;
+            vehicleMarker.setPosition(new google.maps.LatLng(nextLat, nextLng));
+
+            if (Math.abs(nextLat - pickupMarker.getPosition().lat()) < 0.00005) {
+                clearInterval(interval);
+            }
+        }, 50);
+    }
+
+    window.onload = initMap;
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
 </body>
