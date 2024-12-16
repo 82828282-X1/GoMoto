@@ -9,7 +9,6 @@
             margin: 0;
             padding: 0;
             background-color: #f9f9f9;
-            color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -19,26 +18,25 @@
             height: 400px;
             width: 95%;
             max-width: 600px;
-            margin: 10px;
             border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .input-box {
+            margin: 5px;
+            width: 95%;
+            max-width: 600px;
         }
 
         .btn {
-            width: 120px;
-            height: 40px;
             background-color: #E63946;
             color: white;
             border: none;
             border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 10px;
-        }
-
-        .info-box {
-            text-align: center;
-            margin: 10px;
+            padding: 10px 20px;
             font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
         }
 
         .animation-container {
@@ -50,22 +48,32 @@
         }
 
         .animation-container img {
-            height: 80px;
+            height: 100px; /* Restore original size */
+        }
+
+        .info-box {
+            text-align: center;
+            margin: 10px;
+            font-size: 16px;
+            color: #333;
         }
 
         #driver-message {
-            text-align: center;
             color: green;
-            font-size: 14px;
             font-weight: bold;
             margin-top: 10px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <h1>GoMoto</h1>
-    <input id="dropOffInput" type="text" placeholder="Enter pickup location" />
-    <input id="destinationInput" type="text" placeholder="Enter destination location" />
+    <div class="input-box">
+        <input id="dropOffInput" type="text" placeholder="Enter pickup location" style="width: 100%; padding: 10px;">
+    </div>
+    <div class="input-box">
+        <input id="destinationInput" type="text" placeholder="Enter destination location" style="width: 100%; padding: 10px;">
+    </div>
     <div id="map"></div>
     <button class="btn" onclick="confirmRide()">Confirm Ride</button>
     <div class="info-box" id="info-text">Ride information will appear here...</div>
@@ -77,12 +85,12 @@
 
     <script>
         let map, pickupMarker, destinationMarker, directionsRenderer, directionsService;
-        let distance, price;
 
         function initMap() {
-            const defaultCoords = { lat: -13.9833, lng: 33.7833 };
+            const defaultLocation = { lat: -13.9833, lng: 33.7833 };
+
             map = new google.maps.Map(document.getElementById("map"), {
-                center: defaultCoords,
+                center: defaultLocation,
                 zoom: 13
             });
 
@@ -94,23 +102,24 @@
             const destinationInput = document.getElementById("destinationInput");
 
             const autocompletePickup = new google.maps.places.Autocomplete(pickupInput);
+            const autocompleteDestination = new google.maps.places.Autocomplete(destinationInput);
+
             autocompletePickup.addListener("place_changed", () => {
-                setMarker("pickup", autocompletePickup.getPlace().geometry.location);
+                const place = autocompletePickup.getPlace();
+                if (place.geometry) setMarker("pickup", place.geometry.location);
             });
 
-            const autocompleteDestination = new google.maps.places.Autocomplete(destinationInput);
             autocompleteDestination.addListener("place_changed", () => {
-                setMarker("destination", autocompleteDestination.getPlace().geometry.location);
-                calculateRoute();
+                const place = autocompleteDestination.getPlace();
+                if (place.geometry) {
+                    setMarker("destination", place.geometry.location);
+                    calculateRoute();
+                }
             });
         }
 
         function setMarker(type, location) {
-            const icon = {
-                url: "https://maps.google.com/mapfiles/kml/paddle/red-circle.png",
-                scaledSize: new google.maps.Size(35, 35)
-            };
-
+            const icon = { url: "https://maps.google.com/mapfiles/kml/paddle/red-circle.png", scaledSize: new google.maps.Size(30, 30) };
             if (type === "pickup") {
                 if (pickupMarker) pickupMarker.setMap(null);
                 pickupMarker = new google.maps.Marker({ position: location, map: map, icon: icon });
@@ -122,7 +131,7 @@
 
         function calculateRoute() {
             if (!pickupMarker || !destinationMarker) {
-                document.getElementById("info-text").innerText = "Set both pickup and destination locations.";
+                document.getElementById("info-text").innerText = "Set both pickup and destination points.";
                 return;
             }
 
@@ -134,9 +143,10 @@
                 if (status === "OK") {
                     directionsRenderer.setDirections(result);
                     const leg = result.routes[0].legs[0];
-                    distance = leg.distance.text;
-                    price = (leg.distance.value / 1000) * 1000; // Example pricing logic
-                    document.getElementById("info-text").innerText =
+                    const distance = leg.distance.text;
+                    const price = (leg.distance.value / 1000) * 1000;
+
+                    document.getElementById("info-text").innerText = 
                         `Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
                 } else {
                     document.getElementById("info-text").innerText = "Could not calculate route.";
@@ -146,7 +156,7 @@
 
         function confirmRide() {
             if (!pickupMarker || !destinationMarker) {
-                alert("Please set both pickup and destination points.");
+                alert("Set pickup and destination points first.");
                 return;
             }
 
@@ -155,10 +165,7 @@
             document.getElementById("driver-message").innerText = "Driver on his way!";
         }
 
-        // Initialize Google Maps
-        window.onload = () => {
-            initMap();
-        };
+        window.onload = initMap;
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
 </body>
