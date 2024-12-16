@@ -1,19 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GoMoto Ride Demo</title>
+    <title>GoMoto</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
     <style>
         body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
             color: #333;
-        }
-
-        #map {
-            height: 60vh;
-            width: 100%;
         }
 
         .input-container {
@@ -21,130 +17,210 @@
             align-items: center;
             justify-content: center;
             gap: 5px;
-            margin: 10px;
+            margin: 5px;
         }
 
         input[type="text"] {
-            width: 65%;
-            padding: 8px;
+            width: 68%;
+            padding: 10px;
             border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        select {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
+            border-radius: 20px;
+            font-size: 16px;
         }
 
         .btn {
-            padding: 10px 15px;
-            background-color: #F4A261;
-            color: white;
+            width: 120px;
+            height: 40px;
+            padding: 0;
+            background-color: #E63946;
+            color: #FFF;
             border: none;
-            border-radius: 5px;
+            border-radius: 20px;
             cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: background-color 0.3s;
         }
 
         .btn:hover {
-            background-color: #E63946;
+            background-color: #D62839;
+        }
+
+        #map {
+            height: 400px;
+            width: 100%;
+            margin: 5px 0;
+            border-radius: 10px;
+        }
+
+        .vehicle-selection {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vehicle-option {
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .vehicle-option.selected {
+            background-color: #F4A261;
+            color: #FFF;
+            border-color: #E63946;
+        }
+
+        .vehicle-option:hover {
+            border-color: #F4A261;
+        }
+
+        #info-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin: 5px;
+            background-color: #FFF;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            gap: 10px;
+        }
+
+        #info-text {
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        select {
+            width: 90%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            text-align: center;
         }
     </style>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places"></script>
 </head>
 <body>
-    <div class="input-container">
-        <input type="text" id="pickup" placeholder="Enter pickup location" autocomplete="off">
-        <input type="text" id="dropoff" placeholder="Enter drop-off location" autocomplete="off">
-        <button class="btn" onclick="confirmRide()">Confirm Ride</button>
+<div class="input-container">
+    <input type="text" id="dropOffInput" placeholder="Enter pickup location" autocomplete="off">
+    <button class="btn" onclick="useCurrentLocation()">Current Location</button>
+</div>
+
+<div class="input-container">
+    <input type="text" id="destinationInput" placeholder="Enter destination location" autocomplete="off">
+    <div class="vehicle-selection">
+        <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')">🚗</div>
+        <div id="motorcycleOption" class="vehicle-option" onclick="selectVehicle('motorcycle')">🏍️</div>
     </div>
-    <div id="map"></div>
+</div>
+
+<div id="map"></div>
+
+<div id="info-container">
+    <div id="info-text">Your journey summary will appear here...</div>
+    <select id="paymentMethod">
+        <option value="" disabled selected>Payment Method</option>
+        <option value="Cash">Cash</option>
+        <option value="Airtel Money">Airtel Money</option>
+        <option value="Tnm Mpamba">Tnm Mpamba</option>
+        <option value="Credit Card">Credit Card</option>
+    </select>
+    <button class="btn" onclick="confirmRide()">Confirm Ride</button>
+</div>
 
 <script>
-    let map, pickupMarker, dropoffMarker, directionsService, directionsRenderer;
-    let autocompletePickup, autocompleteDropoff;
+    let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
+    let selectedVehicle = "car";
+    let distance, price;
 
     function initMap() {
-        const lilongweCenter = { lat: -13.9833, lng: 33.7833 }; // Lilongwe Center
+        const defaultCoords = { lat: -15.7861, lng: 35.0058 };
         map = new google.maps.Map(document.getElementById("map"), {
-            center: lilongweCenter,
-            zoom: 14,
+            center: defaultCoords,
+            zoom: 13,
+            mapTypeId: "roadmap",
         });
 
         directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
-        
-        // Initialize autocomplete for pickup and drop-off
-        autocompletePickup = new google.maps.places.Autocomplete(
-            document.getElementById("pickup"), { componentRestrictions: { country: "MW" } }
-        );
+        directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+        directionsRenderer.setMap(map);
 
-        autocompleteDropoff = new google.maps.places.Autocomplete(
-            document.getElementById("dropoff"), { componentRestrictions: { country: "MW" } }
-        );
+        autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"));
+        autocompletePickup.addListener("place_changed", () => {
+            setPickupMarker(autocompletePickup.getPlace().geometry.location);
+        });
 
-        autocompletePickup.addListener("place_changed", setPickupMarker);
-        autocompleteDropoff.addListener("place_changed", setDropoffMarker);
+        autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("destinationInput"));
+        autocompleteDestination.addListener("place_changed", () => {
+            setDestinationMarker(autocompleteDestination.getPlace().geometry.location);
+            calculateRoute();
+        });
     }
 
-    function setPickupMarker() {
-        const place = autocompletePickup.getPlace();
-        if (place.geometry) {
-            if (pickupMarker) pickupMarker.setMap(null);
-            pickupMarker = new google.maps.Marker({
-                position: place.geometry.location,
-                map: map,
-                label: "A",
-                title: "Pickup Location",
-            });
-            map.panTo(place.geometry.location);
-        }
+    function useCurrentLocation() {
+        navigator.geolocation.getCurrentPosition(position => {
+            const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+            setPickupMarker(coords);
+            map.setCenter(coords);
+        });
     }
 
-    function setDropoffMarker() {
-        const place = autocompleteDropoff.getPlace();
-        if (place.geometry) {
-            if (dropoffMarker) dropoffMarker.setMap(null);
-            dropoffMarker = new google.maps.Marker({
-                position: place.geometry.location,
-                map: map,
-                label: "B",
-                title: "Drop-off Location",
-            });
-            map.panTo(place.geometry.location);
-        }
+    function setPickupMarker(location) {
+        if (pickupMarker) pickupMarker.setMap(null);
+        pickupMarker = new google.maps.Marker({ position: location, map: map, icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" });
+    }
+
+    function setDestinationMarker(location) {
+        if (destinationMarker) destinationMarker.setMap(null);
+        destinationMarker = new google.maps.Marker({ position: location, map: map, icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" });
+    }
+
+    function calculateRoute() {
+        if (!pickupMarker || !destinationMarker) return;
+        directionsService.route({
+            origin: pickupMarker.getPosition(),
+            destination: destinationMarker.getPosition(),
+            travelMode: "DRIVING",
+        }, (response, status) => {
+            if (status === "OK") {
+                directionsRenderer.setDirections(response);
+                const leg = response.routes[0].legs[0];
+                distance = leg.distance.text;
+                price = (selectedVehicle === "car" ? 1500 : 1000) * (leg.distance.value / 1000);
+                document.getElementById("info-text").innerText = `Mode: ${selectedVehicle === "car" ? "Car" : "Motorcycle"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
+            }
+        });
+    }
+
+    function selectVehicle(vehicle) {
+        selectedVehicle = vehicle;
+        document.querySelectorAll(".vehicle-option").forEach(el => el.classList.remove("selected"));
+        document.getElementById(vehicle + "Option").classList.add("selected");
+        calculateRoute();
     }
 
     function confirmRide() {
-        if (!pickupMarker || !dropoffMarker) {
-            alert("Please enter both pickup and drop-off locations.");
+        const paymentMethod = document.getElementById("paymentMethod").value;
+        if (!paymentMethod || !pickupMarker || !destinationMarker) {
+            alert("Please complete all fields before confirming the ride.");
             return;
         }
-        const distance = google.maps.geometry.spherical.computeDistanceBetween(
-            pickupMarker.getPosition(),
-            dropoffMarker.getPosition()
-        ) / 1000; // Convert meters to kilometers
 
-        // Display confirmation popup
-        const confirmationMessage = `
-            <div style="text-align: center;">
-                <img src="https://raw.githubusercontent.com/88448844/Driver-/refs/heads/main/driver%202.gif" 
-                     alt="Driver Icon" style="width: 80px; height: 80px;">
-                <h3>Ride Confirmed!</h3>
-                <p><strong>Pickup:</strong> ${document.getElementById("pickup").value}</p>
-                <p><strong>Drop-off:</strong> ${document.getElementById("dropoff").value}</p>
-                <p><strong>Distance:</strong> ${distance.toFixed(2)} km</p>
-            </div>
-        `;
-        const popup = window.open("", "Ride Confirmation", "width=300,height=400");
-        popup.document.write(confirmationMessage);
-        popup.document.close();
+        const message = `🚕 Ride Details:\nPickup: ${document.getElementById("dropOffInput").value}\nDestination: ${document.getElementById("destinationInput").value}\nDistance: ${distance}\nPrice: MK ${price.toFixed(2)}\nPayment Method: ${paymentMethod}`;
+        alert("Demo Confirmed! Ride details:\n" + message);
     }
-
-    window.onload = initMap;
 </script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
