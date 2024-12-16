@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,22 +14,18 @@
 
         .input-container {
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             gap: 5px;
             margin: 5px;
         }
 
         input[type="text"] {
-            width: 55%;
+            width: 65%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 20px;
             font-size: 16px;
-        }
-
-        #destinationInput {
-            margin-left: 5px; /* Align drop-off input field */
         }
 
         .btn {
@@ -62,8 +57,9 @@
         .vehicle-selection {
             display: flex;
             justify-content: space-between;
-            width: 150px; /* Adjust gap */
-            margin: 0 auto;
+            align-items: center;
+            gap: 5px;
+            width: 35%;
         }
 
         .vehicle-option {
@@ -73,6 +69,8 @@
             cursor: pointer;
             font-size: 18px;
             transition: border-color 0.3s, background-color 0.3s;
+            text-align: center;
+            flex: 1;
         }
 
         .vehicle-option.selected {
@@ -95,6 +93,25 @@
             gap: 10px;
         }
 
+        #confirmation-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        #driver-message {
+            text-align: left;
+            font-size: 14px;
+            color: green;
+            font-weight: bold;
+        }
+
+        #driver-icon {
+            height: 40px;
+            width: 40px;
+        }
+
         select {
             width: 90%;
             padding: 8px;
@@ -102,19 +119,10 @@
             border: 1px solid #ccc;
             border-radius: 10px;
             text-align: center;
+            margin-bottom: 10px;
         }
 
-        #driver-message {
-            margin-top: 10px;
-            text-align: center;
-            font-size: 14px;
-            color: green;
-            font-weight: bold;
-        }
-
-        #driver-animation {
-            display: none;
-            margin-top: 10px;
+        .confirmation-details {
             text-align: center;
         }
     </style>
@@ -129,7 +137,7 @@
     <input type="text" id="destinationInput" placeholder="Enter destination location" autocomplete="off">
     <div class="vehicle-selection">
         <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')">🚗</div>
-        <div id="motorcycleOption" class="vehicle-option" onclick="selectVehicle('motorcycle')">🏍️</div>
+        <div id="motorcycleOption" class="vehicle-option" onclick="selectVehicle('motorbike')">🏍️</div>
     </div>
 </div>
 
@@ -145,10 +153,10 @@
         <option value="Credit Card">Credit Card</option>
     </select>
     <button class="btn" onclick="confirmRide()">Confirm Ride</button>
-    <div id="driver-animation">
-        <img src="https://raw.githubusercontent.com/88448844/Driver/refs/heads/main/driver%202.gif" alt="Driver Animation" width="80" height="80">
+    <div id="confirmation-container">
+        <div id="driver-message"></div>
+        <img id="driver-icon" src="" alt="Driver Icon" hidden>
     </div>
-    <div id="driver-message"></div>
 </div>
 
 <script>
@@ -157,7 +165,7 @@
     let distance, price;
 
     function initMap() {
-        const defaultCoords = { lat: -13.9833, lng: 33.7833 };
+        const defaultCoords = { lat: -13.9833, lng: 33.7833 }; 
         map = new google.maps.Map(document.getElementById("map"), {
             center: defaultCoords,
             zoom: 13,
@@ -165,49 +173,43 @@
         });
 
         directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+        directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
         directionsRenderer.setMap(map);
 
         autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"), {
             componentRestrictions: { country: "MW" }
         });
         autocompletePickup.addListener("place_changed", () => {
-            setPickupMarker(autocompletePickup.getPlace().geometry.location);
+            setMarker("pickup", autocompletePickup.getPlace().geometry.location, "A");
         });
 
         autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("destinationInput"), {
             componentRestrictions: { country: "MW" }
         });
         autocompleteDestination.addListener("place_changed", () => {
-            setDestinationMarker(autocompleteDestination.getPlace().geometry.location);
+            setMarker("destination", autocompleteDestination.getPlace().geometry.location, "B");
             calculateRoute();
         });
     }
 
-    function useCurrentLocation() {
-        navigator.geolocation.getCurrentPosition(position => {
-            const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
-            setPickupMarker(coords);
-            map.setCenter(coords);
-        });
-    }
-
-    function setPickupMarker(location) {
-        if (pickupMarker) pickupMarker.setMap(null);
-        pickupMarker = new google.maps.Marker({
-            position: location,
-            map: map,
-            icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-        });
-    }
-
-    function setDestinationMarker(location) {
-        if (destinationMarker) destinationMarker.setMap(null);
-        destinationMarker = new google.maps.Marker({
-            position: location,
-            map: map,
-            icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-        });
+    function setMarker(type, location, label) {
+        if (type === "pickup") {
+            if (pickupMarker) pickupMarker.setMap(null);
+            pickupMarker = new google.maps.Marker({
+                position: location,
+                map: map,
+                label: label,
+                icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" }
+            });
+        } else {
+            if (destinationMarker) destinationMarker.setMap(null);
+            destinationMarker = new google.maps.Marker({
+                position: location,
+                map: map,
+                label: label,
+                icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" }
+            });
+        }
     }
 
     function calculateRoute() {
@@ -222,8 +224,8 @@
                 const leg = response.routes[0].legs[0];
                 distance = leg.distance.text;
                 price = (selectedVehicle === "car" ? 1500 : 1000) * (leg.distance.value / 1000);
-                document.getElementById("info-text").innerText = 
-                    `Mode: ${selectedVehicle === "car" ? "Car" : "Motorcycle"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
+                document.getElementById("info-text").innerText =
+                    `Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
             }
         });
     }
@@ -242,8 +244,16 @@
             return;
         }
 
-        document.getElementById("driver-animation").style.display = "block";
-        document.getElementById("driver-message").innerText = "🚕 Driver on his way!";
+        alert(`Ride Confirmed!\n\nDistance: ${distance}\nPrice: MK ${price.toFixed(2)}\nPayment: ${paymentMethod}`);
+
+        const vehicleIcon = selectedVehicle === "car"
+            ? "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/minicar%202.gif"
+            : "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/motorbike.gif";
+
+        document.getElementById("driver-message").innerText = "Driver on his way!";
+        const driverIcon = document.getElementById("driver-icon");
+        driverIcon.src = vehicleIcon;
+        driverIcon.hidden = false;
     }
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
