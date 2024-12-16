@@ -1,190 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>GoMoto</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .input-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-            margin: 5px;
-            width: 95%;
-            max-width: 600px;
-        }
-
-        input[type="text"] {
-            width: 65%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 20px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-
-        .btn {
-            width: 120px;
-            height: 40px;
-            background-color: #E63946;
-            color: #FFF;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s;
-        }
-
-        .btn:hover {
-            background-color: #D62839;
-        }
-
-        #map {
-            height: 400px;
-            width: 95%;
-            max-width: 600px;
-            margin: 5px 0;
-            border-radius: 10px;
-        }
-
-        .vehicle-selection {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 5px;
-            width: 35%;
-        }
-
-        .vehicle-option {
-            padding: 10px;
-            border: 2px solid #ccc;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 18px;
-            transition: border-color 0.3s, background-color 0.3s;
-            text-align: center;
-            flex: 1;
-            box-sizing: border-box;
-        }
-
-        .vehicle-option.selected {
-            background-color: #F4A261;
-            color: #FFF;
-            border-color: #E63946;
-        }
-
-        #info-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            margin: 5px;
-            background-color: #FFF;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            gap: 10px;
-            width: 95%;
-            max-width: 600px;
-        }
-
-        #confirmation-container {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            margin-top: 10px;
-            width: 100%;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-
-        #driver-message {
-            text-align: left;
-            font-size: 14px;
-            color: green;
-            font-weight: bold;
-            flex-grow: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #driver-icon {
-            height: 60px;
-            width: 60px;
-            margin-left: 5px;
-            transform: scale(1.5);
-        }
-
-        select {
-            width: 90%;
-            padding: 8px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-
-        .confirmation-details {
-            text-align: center;
-            width: 100%;
-            box-sizing: border-box;
-        }
-    </style>
-</head>
-<body>
-<div class="input-container">
-    <input type="text" id="dropOffInput" placeholder="Enter pickup location" autocomplete="off">
-    <button class="btn" onclick="useCurrentLocation()">Current Location</button>
-</div>
-
-<div class="input-container">
-    <input type="text" id="destinationInput" placeholder="Enter destination location" autocomplete="off">
-    <div class="vehicle-selection">
-        <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')">🚗</div>
-        <div id="motorcycleOption" class="vehicle-option" onclick="selectVehicle('motorbike')">🏍️</div>
-    </div>
-</div>
-
-<div id="map"></div>
-
-<div id="info-container">
-    <div id="info-text">Your journey summary will appear here...</div>
-    <select id="paymentMethod">
-        <option value="" disabled selected>Payment Method</option>
-        <option value="Cash">Cash</option>
-        <option value="Airtel Money">Airtel Money</option>
-        <option value="Tnm Mpamba">Tnm Mpamba</option>
-        <option value="Credit Card">Credit Card</option>
-    </select>
-    <button class="btn" onclick="confirmRide()">Confirm Ride</button>
-    <div id="confirmation-container">
-        <div id="driver-message"></div>
-        <img id="driver-icon" src="" alt="Driver Icon" hidden>
-    </div>
-</div>
-
 <script>
     let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
     let selectedVehicle = null; // Tracks selected vehicle
-    let animationVisible = false; // Tracks animation state
     let distance, price;
 
     function initMap() {
@@ -219,6 +35,24 @@
                 calculateRoute();
             }
         });
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    map.setCenter(pos);
+                    setMarker("pickup", pos);
+                },
+                () => {
+                    handleLocationError(true);
+                }
+            );
+        } else {
+            handleLocationError(false);
+        }
     }
 
     function setMarker(type, location) {
@@ -270,38 +104,18 @@
     }
 
     function selectVehicle(vehicle) {
-        selectedVehicle = vehicle; // Update selected vehicle state
+        selectedVehicle = vehicle;
 
         // Remove 'selected' class from both options
         document.getElementById("carOption").classList.remove("selected");
         document.getElementById("motorcycleOption").classList.remove("selected");
 
-        // Add 'selected' class to the selected vehicle
+        // Add 'selected' class to the chosen vehicle
         document.getElementById(vehicle + "Option").classList.add("selected");
 
-        // Clear any visible animation since the ride isn't confirmed yet
-        updateAnimationVisibility();
-    }
-
-    function displayAnimation(vehicle) {
-        const animationContainer = document.getElementById("driver-message");
-        if (vehicle === "car") {
-            animationContainer.innerHTML = `<img src="https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/minicar%202.gif" width="50" alt="Car">`;
-        } else if (vehicle === "motorbike") {
-            animationContainer.innerHTML = `<img src="https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/motorbike.gif" width="50" alt="Motorbike">`;
-        }
-    }
-
-    function updateAnimationVisibility() {
-        const animationContainer = document.getElementById("driver-message");
-        const driverIcon = document.getElementById("driver-icon");
-        if (animationVisible && selectedVehicle) {
-            driverIcon.hidden = false;
-            displayAnimation(selectedVehicle);
-        } else {
-            animationContainer.innerHTML = ""; // Clear any animation
-            driverIcon.hidden = true;
-        }
+        // Clear animation or previous confirmation message
+        document.getElementById("driver-message").innerText = "";
+        document.getElementById("driver-icon").hidden = true;
     }
 
     function useCurrentLocation() {
@@ -339,20 +153,25 @@
     function confirmRide() {
         const paymentMethod = document.getElementById("paymentMethod").value;
 
-        // Check for all required inputs
         if (!paymentMethod || !pickupMarker || !destinationMarker || !selectedVehicle) {
             alert("Please complete all fields before confirming the ride.");
             return;
         }
 
-        // Update animation state to visible and display animation
-        animationVisible = true;
-        updateAnimationVisibility();
-
         alert(`Ride Confirmed!\n\nDistance: ${distance}\nPrice: MK ${price.toFixed(2)}\nPayment: ${paymentMethod}`);
-        document.getElementById("driver-message").innerText = "Driver on their way!";
+
+        // Display driver animation after confirmation
+        const driverMessage = document.getElementById("driver-message");
+        driverMessage.innerText = "Driver on his way!"; // Restore green message
+        driverMessage.style.color = "green";
+
+        const driverIcon = document.getElementById("driver-icon");
+        driverIcon.hidden = false;
+
+        if (selectedVehicle === "car") {
+            driverIcon.src = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/minicar%202.gif";
+        } else if (selectedVehicle === "motorbike") {
+            driverIcon.src = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/motorbike.gif";
+        }
     }
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
-</body>
-</html>
