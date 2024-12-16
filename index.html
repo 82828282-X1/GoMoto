@@ -9,164 +9,355 @@
             margin: 0;
             padding: 0;
             background-color: #f9f9f9;
+            color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
+        }
+
+        .input-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            margin: 5px;
+            width: 95%;
+            max-width: 600px;
+        }
+
+        input[type="text"] {
+            width: 65%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            width: 120px;
+            height: 40px;
+            background-color: #E63946;
+            color: #FFF;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #D62839;
         }
 
         #map {
             height: 400px;
             width: 95%;
             max-width: 600px;
+            margin: 5px 0;
             border-radius: 10px;
-            margin-top: 10px;
         }
 
-        .input-box {
-            margin: 5px;
-            width: 95%;
-            max-width: 600px;
-        }
-
-        .btn {
-            background-color: #E63946;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .animation-container {
+        .vehicle-selection {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            gap: 5px;
+            width: 35%;
+        }
+
+        .vehicle-option {
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: border-color 0.3s, background-color 0.3s;
+            text-align: center;
+            flex: 1;
+            box-sizing: border-box;
+        }
+
+        .vehicle-option.selected {
+            background-color: #F4A261;
+            color: #FFF;
+            border-color: #E63946;
+        }
+
+        #info-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin: 5px;
+            background-color: #FFF;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            gap: 10px;
             width: 95%;
             max-width: 600px;
-            margin-top: 20px;
         }
 
-        .animation-container img {
-            height: 100px; /* Restore original size */
-        }
-
-        .info-box {
-            text-align: center;
-            margin: 10px;
-            font-size: 16px;
-            color: #333;
+        #confirmation-container {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-top: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         #driver-message {
+            text-align: left;
+            font-size: 14px;
             color: green;
             font-weight: bold;
-            margin-top: 10px;
+            flex-grow: 1;
+           white-space: nowrap;
+           overflow: hidden;
+           text-overflow: ellipsis;
+        }
+
+        #driver-icon {
+            height: 60px;
+            width: 60px;
+            margin-left: 5px;
+           transform: scale(1.5);
+        }
+
+        select {
+            width: 90%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
             text-align: center;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .confirmation-details {
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
         }
     </style>
 </head>
 <body>
-    <h1>GoMoto</h1>
-    <div class="input-box">
-        <input id="dropOffInput" type="text" placeholder="Enter pickup location" style="width: 100%; padding: 10px;">
+<div class="input-container">
+    <input type="text" id="dropOffInput" placeholder="Enter pickup location" autocomplete="off">
+    <button class="btn" onclick="useCurrentLocation()">Current Location</button>
+</div>
+
+<div class="input-container">
+    <input type="text" id="destinationInput" placeholder="Enter destination location" autocomplete="off">
+    <div class="vehicle-selection">
+        <div id="carOption" class="vehicle-option" onclick="selectVehicle('car')">🚗</div>
+        <div id="motorcycleOption" class="vehicle-option" onclick="selectVehicle('motorbike')">🏍️</div>
     </div>
-    <div class="input-box">
-        <input id="destinationInput" type="text" placeholder="Enter destination location" style="width: 100%; padding: 10px;">
-    </div>
-    <div id="map"></div>
+</div>
+
+<div id="map"></div>
+
+<div id="info-container">
+    <div id="info-text">Your journey summary will appear here...</div>
+    <select id="paymentMethod">
+        <option value="" disabled selected>Payment Method</option>
+        <option value="Cash">Cash</option>
+        <option value="Airtel Money">Airtel Money</option>
+        <option value="Tnm Mpamba">Tnm Mpamba</option>
+        <option value="Credit Card">Credit Card</option>
+    </select>
     <button class="btn" onclick="confirmRide()">Confirm Ride</button>
-    <div class="info-box" id="info-text">Ride information will appear here...</div>
-    <div class="animation-container">
-        <img id="car-animation" src="https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/minicar%202.gif" alt="Car" hidden>
-        <img id="bike-animation" src="https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/motorbike.gif" alt="Bike" hidden>
+    <div id="confirmation-container">
+        <div id="driver-message"></div>
+        <img id="driver-icon" src="" alt="Driver Icon" hidden>
     </div>
-    <div id="driver-message"></div>
+</div>
 
-    <script>
-        let map, pickupMarker, destinationMarker, directionsRenderer, directionsService;
+<script>
+    let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
+    let selectedVehicle = null; // Initialize to null, no default selection
+    let distance, price;
 
-        function initMap() {
-            const defaultLocation = { lat: -13.9833, lng: 33.7833 };
+  function initMap() {
+      const defaultCoords = { lat: -13.9833, lng: 33.7833 };
+       map = new google.maps.Map(document.getElementById("map"), {
+            center: defaultCoords,
+            zoom: 13,
+            mapTypeId: "roadmap",
+        });
 
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: defaultLocation,
-                zoom: 13
-            });
+       directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+        directionsRenderer.setMap(map);
 
-            directionsService = new google.maps.DirectionsService();
-            directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
-            directionsRenderer.setMap(map);
+       autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"), {
+            componentRestrictions: { country: "MW" }
+        });
+        autocompletePickup.addListener("place_changed", () => {
+            const place = autocompletePickup.getPlace();
+             if (place && place.geometry) {
+               setMarker("pickup", place.geometry.location);
+            }
+        });
 
-            const pickupInput = document.getElementById("dropOffInput");
-            const destinationInput = document.getElementById("destinationInput");
+        autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("destinationInput"), {
+            componentRestrictions: { country: "MW" }
+        });
+       autocompleteDestination.addListener("place_changed", () => {
+           const place = autocompleteDestination.getPlace();
+            if (place && place.geometry) {
+                setMarker("destination", place.geometry.location);
+                calculateRoute();
+           }
+       });
 
-            const autocompletePickup = new google.maps.places.Autocomplete(pickupInput);
-            const autocompleteDestination = new google.maps.places.Autocomplete(destinationInput);
-
-            autocompletePickup.addListener("place_changed", () => {
-                const place = autocompletePickup.getPlace();
-                if (place.geometry) setMarker("pickup", place.geometry.location);
-            });
-
-            autocompleteDestination.addListener("place_changed", () => {
-                const place = autocompleteDestination.getPlace();
-                if (place.geometry) {
-                    setMarker("destination", place.geometry.location);
-                    calculateRoute();
+         if (navigator.geolocation) {
+           navigator.geolocation.getCurrentPosition(
+               (position) => {
+                   const pos = {
+                       lat: position.coords.latitude,
+                       lng: position.coords.longitude,
+                  };
+                  map.setCenter(pos);
+                    setMarker("pickup", pos);
+                },
+                () => {
+                     handleLocationError(true);
                 }
+           );
+      } else {
+            handleLocationError(false);
+        }
+    }
+
+    function setMarker(type, location) {
+       const icon = {
+            url: "https://maps.google.com/mapfiles/kml/paddle/red-circle.png",
+           scaledSize: new google.maps.Size(35, 35),
+        };
+
+      if (type === "pickup") {
+           if (pickupMarker) pickupMarker.setMap(null);
+            pickupMarker = new google.maps.Marker({
+                position: location,
+               map: map,
+                icon: icon
             });
+           map.panTo(location);
+        } else {
+            if (destinationMarker) destinationMarker.setMap(null);
+           destinationMarker = new google.maps.Marker({
+                position: location,
+                map: map,
+                icon: icon
+           });
         }
+    }
 
-        function setMarker(type, location) {
-            const icon = { url: "https://maps.google.com/mapfiles/kml/paddle/red-circle.png", scaledSize: new google.maps.Size(30, 30) };
-            if (type === "pickup") {
-                if (pickupMarker) pickupMarker.setMap(null);
-                pickupMarker = new google.maps.Marker({ position: location, map: map, icon: icon });
-            } else {
-                if (destinationMarker) destinationMarker.setMap(null);
-                destinationMarker = new google.maps.Marker({ position: location, map: map, icon: icon });
-            }
+   function calculateRoute() {
+        if (!pickupMarker || !destinationMarker || !selectedVehicle) {
+           document.getElementById("info-text").innerText = "Select a mode of transport.";
+             return;
+       }
+
+      directionsService.route({
+          origin: pickupMarker.getPosition(),
+           destination: destinationMarker.getPosition(),
+           travelMode: "DRIVING",
+        }, (response, status) => {
+            if (status === "OK") {
+                directionsRenderer.setDirections(response);
+                 const leg = response.routes[0].legs[0];
+               distance = leg.distance.text;
+                price = (selectedVehicle === "car" ? 1500 : 1000) * (leg.distance.value / 1000);
+                 document.getElementById("info-text").innerText =
+                     Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Price: MK ${price.toFixed(2)};
+           } else {
+                document.getElementById("info-text").innerText = "Could not calculate route.";
+           }
+        });
+    }
+
+    function selectVehicle(vehicle) {
+       selectedVehicle = vehicle;
+        document.querySelectorAll(".vehicle-option").forEach(el => el.classList.remove("selected"));
+        document.getElementById(vehicle + "Option").classList.add("selected");
+        updateRideDetails();
+
+    }
+
+   function updateRideDetails(){
+        calculateRoute();
+       displayAnimation();
+   }
+
+  function displayAnimation() {
+      if (selectedVehicle === null){
+             document.getElementById("driver-icon").src = '';
+              document.getElementById("driver-icon").hidden = true;
+              return;
+      }
+
+      let vehicleIcon;
+       if (selectedVehicle === "car") {
+            vehicleIcon = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/minicar%202.gif";
+       } else if (selectedVehicle === "motorbike") {
+           vehicleIcon = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/motorbike.gif";
         }
+       document.getElementById("driver-icon").src = vehicleIcon;
+       document.getElementById("driver-icon").hidden = false;
+    }
 
-        function calculateRoute() {
-            if (!pickupMarker || !destinationMarker) {
-                document.getElementById("info-text").innerText = "Set both pickup and destination points.";
-                return;
-            }
-
-            directionsService.route({
-                origin: pickupMarker.getPosition(),
-                destination: destinationMarker.getPosition(),
-                travelMode: "DRIVING"
-            }, (result, status) => {
-                if (status === "OK") {
-                    directionsRenderer.setDirections(result);
-                    const leg = result.routes[0].legs[0];
-                    const distance = leg.distance.text;
-                    const price = (leg.distance.value / 1000) * 1000;
-
-                    document.getElementById("info-text").innerText = 
-                        `Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
-                } else {
-                    document.getElementById("info-text").innerText = "Could not calculate route.";
-                }
-            });
+   function useCurrentLocation() {
+       if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                   setMarker("pickup", pos);
+                   map.panTo(pos);
+                       const geocoder = new google.maps.Geocoder();
+                        geocoder.geocode({ location: pos }, (results, status) => {
+                         if (status === "OK" && results[0]) {
+                                document.getElementById("dropOffInput").value = results[0].formatted_address;
+                            }
+                       });
+               },
+               () => {
+                  handleLocationError(true);
+               }
+            );
+      } else {
+          handleLocationError(false);
         }
+  }
 
-        function confirmRide() {
-            if (!pickupMarker || !destinationMarker) {
-                alert("Set pickup and destination points first.");
-                return;
-            }
+   function handleLocationError(browserHasGeolocation) {
+        document.getElementById("dropOffInput").placeholder = browserHasGeolocation
+            ? "Error: The Geolocation service failed."
+            : "Error: Your browser doesn't support geolocation.";
+    }
 
-            document.getElementById("car-animation").hidden = false;
-            document.getElementById("bike-animation").hidden = false;
-            document.getElementById("driver-message").innerText = "Driver on his way!";
-        }
-
-        window.onload = initMap;
-    </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
+    function confirmRide() {
+       const paymentMethod = document.getElementById("paymentMethod").value;
+        if (!paymentMethod || !pickupMarker || !destinationMarker || !selectedVehicle) {
+            alert("Please complete all fields before confirming the ride.");
+             return;
+       }
+        alert(Ride Confirmed!\n\nDistance: ${distance}\nPrice: MK ${price.toFixed(2)}\nPayment: ${paymentMethod});
+      document.getElementById("driver-message").innerText = "Driver on his way!";
+    }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
