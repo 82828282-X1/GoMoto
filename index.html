@@ -14,14 +14,14 @@
 
         .input-container {
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             gap: 5px;
             margin: 5px;
         }
 
         input[type="text"] {
-            width: 55%; /* Adjusted length for both input fields */
+            width: 55%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 20px;
@@ -31,7 +31,6 @@
         .btn {
             width: 120px;
             height: 40px;
-            padding: 0;
             background-color: #E63946;
             color: #FFF;
             border: none;
@@ -98,12 +97,15 @@
             border: 1px solid #ccc;
             border-radius: 10px;
             text-align: center;
-            margin-bottom: 10px; /* Added gap between dropdown and button */
+            margin-bottom: 10px; /* Added gap */
         }
 
-        .popup-img {
-            width: 80px;
-            height: 80px;
+        #driver-message {
+            margin-top: 10px;
+            text-align: left;
+            font-size: 14px;
+            color: green;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -133,6 +135,7 @@
         <option value="Credit Card">Credit Card</option>
     </select>
     <button class="btn" onclick="confirmRide()">Confirm Ride</button>
+    <div id="driver-message"></div> <!-- Driver Message Placeholder -->
 </div>
 
 <script>
@@ -141,7 +144,7 @@
     let distance, price;
 
     function initMap() {
-        const defaultCoords = { lat: -13.9833, lng: 33.7833 }; // Malawi Default
+        const defaultCoords = { lat: -13.9833, lng: 33.7833 }; // Malawi Center
         map = new google.maps.Map(document.getElementById("map"), {
             center: defaultCoords,
             zoom: 13,
@@ -227,17 +230,14 @@
         }
 
         const message = `
-            <div style="text-align:center;">
-                <img src="https://raw.githubusercontent.com/88448844/Driver/refs/heads/main/driver%202.gif" 
-                    width="80" height="80" alt="Driver Animation">
-                <p>Ride Confirmed!</p>
-                <p>Distance: ${distance}</p>
-                <p>Price: MK ${price.toFixed(2)}</p>
-                <p>Payment: ${paymentMethod}</p>
-            </div>`;
-        const popup = document.createElement("div");
-        popup.innerHTML = message;
+            Ride Confirmed!\n
+            Distance: ${distance}\n
+            Price: MK ${price.toFixed(2)}\n
+            Payment: ${paymentMethod}`;
         alert(message);
+
+        // Show Driver on the Way message
+        document.getElementById("driver-message").innerText = "🚕 Driver on his way!";
     }
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
