@@ -210,6 +210,7 @@
         trafficLayer = new google.maps.TrafficLayer();
         trafficLayer.setMap(map); // Initially show traffic
 
+
         autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"), {
             componentRestrictions: { country: "MW" }
         });
@@ -291,34 +292,16 @@
                 const leg = response.routes[0].legs[0];
                 distance = leg.distance.text;
                 price = (selectedVehicle === "car" ? 1500 : 1000) * (leg.distance.value / 1000);
-                 duration = leg.duration.text;
+                duration = leg.duration.text;
 
-                // Attempt to add duration to the map route
-               directionsRenderer.setOptions({
-                   polylineOptions: {
-                       strokeColor: 'black',
-                    },
-                     // Add a duration label on top of route
-                   directions: response,
-                    routeIndex: 0, // index of route to label
-                     // Custom label function. This is complex and may not be performant.
-                  //    polylineOptions: function(polyline) {
-                 //         return {
-                 //           label: duration,
-                 //           offset: 30,
-                //            repeat: true,
-                //            style: "fill:white;stroke:#000;stroke-width:2px;font: 16px Arial;",
-                  //        }
-                  //    }
-              });
-                 document.getElementById("info-text").innerText =
-                    `Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Est. Time: ${duration}, Price: MK ${price.toFixed(2)}`;
-             } else {
+
+                document.getElementById("info-text").innerText =
+                    `Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Est. Journey Time: ${duration}, Price: MK ${price.toFixed(2)}`;
+            } else {
                 document.getElementById("info-text").innerText = "Could not calculate route.";
             }
-       });
+        });
     }
-
 
 
     function selectVehicle(vehicle) {
@@ -389,12 +372,12 @@
 
    function confirmRide() {
         const paymentMethod = document.getElementById("paymentMethod").value;
-        if (!paymentMethod || !pickupMarker || !destinationMarker || !selectedVehicle) {
+         if (!paymentMethod || !pickupMarker || !destinationMarker || !selectedVehicle) {
             alert("Please complete all fields before confirming the ride.");
-            return;
+             return;
         }
         const modeOfTransport = selectedVehicle === "car" ? "Car" : "Motorbike";
-        alert(`Ride Confirmed!\n\nMode: ${modeOfTransport}\nDistance: ${distance}\nEst. Time: ${duration}\nPrice: MK ${price.toFixed(2)}\nPayment: ${paymentMethod}`);
+         alert(`Ride Confirmed!\n\nMode: ${modeOfTransport}\nDistance: ${distance}\nEst. Journey Time: ${duration}\nPrice: MK ${price.toFixed(2)}\nPayment: ${paymentMethod}`);
         document.getElementById("driver-message").innerText = "Driver on his way!";
         displayAnimation();
     }
