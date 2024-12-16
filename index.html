@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -120,17 +119,16 @@
             color: green;
             font-weight: bold;
             flex-grow: 1;
-           white-space: nowrap;
-           overflow: hidden;
-           text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-
 
         #driver-icon {
             height: 60px;
             width: 60px;
             margin-left: 5px;
-           transform: scale(1.5);
+            transform: scale(1.5);
         }
 
         select {
@@ -185,182 +183,174 @@
 
 <script>
     let map, pickupMarker, destinationMarker, autocompletePickup, autocompleteDestination, directionsRenderer, directionsService;
-    let selectedVehicle = null; // Initialize to null, no default selection
+    let selectedVehicle = null; // Tracks selected vehicle
+    let animationVisible = false; // Tracks animation state
     let distance, price;
 
-
-  function initMap() {
-      const defaultCoords = { lat: -13.9833, lng: 33.7833 };
-       map = new google.maps.Map(document.getElementById("map"), {
+    function initMap() {
+        const defaultCoords = { lat: -13.9833, lng: 33.7833 };
+        map = new google.maps.Map(document.getElementById("map"), {
             center: defaultCoords,
             zoom: 13,
             mapTypeId: "roadmap",
         });
 
-       directionsService = new google.maps.DirectionsService();
+        directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
         directionsRenderer.setMap(map);
 
-
-       autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"), {
+        autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("dropOffInput"), {
             componentRestrictions: { country: "MW" }
         });
         autocompletePickup.addListener("place_changed", () => {
             const place = autocompletePickup.getPlace();
-             if (place && place.geometry) {
-               setMarker("pickup", place.geometry.location);
+            if (place && place.geometry) {
+                setMarker("pickup", place.geometry.location);
             }
         });
 
         autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("destinationInput"), {
             componentRestrictions: { country: "MW" }
         });
-       autocompleteDestination.addListener("place_changed", () => {
-           const place = autocompleteDestination.getPlace();
+        autocompleteDestination.addListener("place_changed", () => {
+            const place = autocompleteDestination.getPlace();
             if (place && place.geometry) {
                 setMarker("destination", place.geometry.location);
                 calculateRoute();
-           }
-       });
-
-         if (navigator.geolocation) {
-           navigator.geolocation.getCurrentPosition(
-               (position) => {
-                   const pos = {
-                       lat: position.coords.latitude,
-                       lng: position.coords.longitude,
-                  };
-                  map.setCenter(pos);
-                    setMarker("pickup", pos);
-                },
-                () => {
-                     handleLocationError(true);
-                }
-           );
-      } else {
-            handleLocationError(false);
-        }
+            }
+        });
     }
 
     function setMarker(type, location) {
-       const icon = {
+        const icon = {
             url: "https://maps.google.com/mapfiles/kml/paddle/red-circle.png",
-           scaledSize: new google.maps.Size(35, 35),
+            scaledSize: new google.maps.Size(35, 35),
         };
 
-      if (type === "pickup") {
-           if (pickupMarker) pickupMarker.setMap(null);
+        if (type === "pickup") {
+            if (pickupMarker) pickupMarker.setMap(null);
             pickupMarker = new google.maps.Marker({
-                position: location,
-               map: map,
-                icon: icon
-            });
-           map.panTo(location);
-        } else {
-            if (destinationMarker) destinationMarker.setMap(null);
-           destinationMarker = new google.maps.Marker({
                 position: location,
                 map: map,
                 icon: icon
-           });
+            });
+            map.panTo(location);
+        } else {
+            if (destinationMarker) destinationMarker.setMap(null);
+            destinationMarker = new google.maps.Marker({
+                position: location,
+                map: map,
+                icon: icon
+            });
         }
     }
 
-   function calculateRoute() {
+    function calculateRoute() {
         if (!pickupMarker || !destinationMarker || !selectedVehicle) {
-           document.getElementById("info-text").innerText = "Select a mode of transport.";
-             return;
-       }
+            document.getElementById("info-text").innerText = "Select a mode of transport.";
+            return;
+        }
 
-      directionsService.route({
-          origin: pickupMarker.getPosition(),
-           destination: destinationMarker.getPosition(),
-           travelMode: "DRIVING",
+        directionsService.route({
+            origin: pickupMarker.getPosition(),
+            destination: destinationMarker.getPosition(),
+            travelMode: "DRIVING",
         }, (response, status) => {
             if (status === "OK") {
                 directionsRenderer.setDirections(response);
-                 const leg = response.routes[0].legs[0];
-               distance = leg.distance.text;
+                const leg = response.routes[0].legs[0];
+                distance = leg.distance.text;
                 price = (selectedVehicle === "car" ? 1500 : 1000) * (leg.distance.value / 1000);
-                 document.getElementById("info-text").innerText =
-                     `Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
-           } else {
+                document.getElementById("info-text").innerText =
+                    `Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
+            } else {
                 document.getElementById("info-text").innerText = "Could not calculate route.";
-           }
+            }
         });
     }
 
     function selectVehicle(vehicle) {
-       selectedVehicle = vehicle;
-        document.querySelectorAll(".vehicle-option").forEach(el => el.classList.remove("selected"));
+        selectedVehicle = vehicle; // Update selected vehicle state
+
+        // Remove 'selected' class from both options
+        document.getElementById("carOption").classList.remove("selected");
+        document.getElementById("motorcycleOption").classList.remove("selected");
+
+        // Add 'selected' class to the selected vehicle
         document.getElementById(vehicle + "Option").classList.add("selected");
-        updateRideDetails();
 
+        // Clear any visible animation since the ride isn't confirmed yet
+        updateAnimationVisibility();
     }
 
-   function updateRideDetails(){
-        calculateRoute();
-       displayAnimation();
-   }
-
-  function displayAnimation() {
-      if (selectedVehicle === null){
-             document.getElementById("driver-icon").src = '';
-              document.getElementById("driver-icon").hidden = true;
-              return;
-      }
-
-      let vehicleIcon;
-       if (selectedVehicle === "car") {
-            vehicleIcon = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/minicar%202.gif";
-       } else if (selectedVehicle === "motorbike") {
-           vehicleIcon = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/motorbike.gif";
+    function displayAnimation(vehicle) {
+        const animationContainer = document.getElementById("driver-message");
+        if (vehicle === "car") {
+            animationContainer.innerHTML = `<img src="https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/minicar%202.gif" width="50" alt="Car">`;
+        } else if (vehicle === "motorbike") {
+            animationContainer.innerHTML = `<img src="https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/motorbike.gif" width="50" alt="Motorbike">`;
         }
-       document.getElementById("driver-icon").src = vehicleIcon;
-       document.getElementById("driver-icon").hidden = false;
     }
 
+    function updateAnimationVisibility() {
+        const animationContainer = document.getElementById("driver-message");
+        const driverIcon = document.getElementById("driver-icon");
+        if (animationVisible && selectedVehicle) {
+            driverIcon.hidden = false;
+            displayAnimation(selectedVehicle);
+        } else {
+            animationContainer.innerHTML = ""; // Clear any animation
+            driverIcon.hidden = true;
+        }
+    }
 
-   function useCurrentLocation() {
-       if (navigator.geolocation) {
+    function useCurrentLocation() {
+        if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const pos = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude,
                     };
-                   setMarker("pickup", pos);
-                   map.panTo(pos);
-                       const geocoder = new google.maps.Geocoder();
-                        geocoder.geocode({ location: pos }, (results, status) => {
-                         if (status === "OK" && results[0]) {
-                                document.getElementById("dropOffInput").value = results[0].formatted_address;
-                            }
-                       });
-               },
-               () => {
-                  handleLocationError(true);
-               }
+                    setMarker("pickup", pos);
+                    map.panTo(pos);
+                    const geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({ location: pos }, (results, status) => {
+                        if (status === "OK" && results[0]) {
+                            document.getElementById("dropOffInput").value = results[0].formatted_address;
+                        }
+                    });
+                },
+                () => {
+                    handleLocationError(true);
+                }
             );
-      } else {
-          handleLocationError(false);
+        } else {
+            handleLocationError(false);
         }
-  }
+    }
 
-   function handleLocationError(browserHasGeolocation) {
+    function handleLocationError(browserHasGeolocation) {
         document.getElementById("dropOffInput").placeholder = browserHasGeolocation
             ? "Error: The Geolocation service failed."
             : "Error: Your browser doesn't support geolocation.";
     }
 
     function confirmRide() {
-       const paymentMethod = document.getElementById("paymentMethod").value;
+        const paymentMethod = document.getElementById("paymentMethod").value;
+
+        // Check for all required inputs
         if (!paymentMethod || !pickupMarker || !destinationMarker || !selectedVehicle) {
             alert("Please complete all fields before confirming the ride.");
-             return;
-       }
+            return;
+        }
+
+        // Update animation state to visible and display animation
+        animationVisible = true;
+        updateAnimationVisibility();
+
         alert(`Ride Confirmed!\n\nDistance: ${distance}\nPrice: MK ${price.toFixed(2)}\nPayment: ${paymentMethod}`);
-      document.getElementById("driver-message").innerText = "Driver on his way!";
+        document.getElementById("driver-message").innerText = "Driver on their way!";
     }
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
