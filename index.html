@@ -14,8 +14,8 @@
 
         .input-container {
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             gap: 5px;
             margin: 5px;
         }
@@ -26,6 +26,10 @@
             border: 1px solid #ccc;
             border-radius: 20px;
             font-size: 16px;
+        }
+
+        #destinationInput {
+            margin-left: 5px; /* Align drop-off input field */
         }
 
         .btn {
@@ -56,9 +60,9 @@
 
         .vehicle-selection {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            width: 150px; /* Adjust gap */
+            margin: 0 auto;
         }
 
         .vehicle-option {
@@ -97,15 +101,20 @@
             border: 1px solid #ccc;
             border-radius: 10px;
             text-align: center;
-            margin-bottom: 10px; /* Added gap */
         }
 
         #driver-message {
             margin-top: 10px;
-            text-align: left;
+            text-align: center;
             font-size: 14px;
             color: green;
             font-weight: bold;
+        }
+
+        #driver-animation {
+            display: none;
+            margin-top: 10px;
+            text-align: center;
         }
     </style>
 </head>
@@ -135,7 +144,10 @@
         <option value="Credit Card">Credit Card</option>
     </select>
     <button class="btn" onclick="confirmRide()">Confirm Ride</button>
-    <div id="driver-message"></div> <!-- Driver Message Placeholder -->
+    <div id="driver-animation">
+        <img src="https://raw.githubusercontent.com/88448844/Driver/refs/heads/main/driver%202.gif" alt="Driver Animation" width="80" height="80">
+    </div>
+    <div id="driver-message"></div>
 </div>
 
 <script>
@@ -144,7 +156,7 @@
     let distance, price;
 
     function initMap() {
-        const defaultCoords = { lat: -13.9833, lng: 33.7833 }; // Malawi Center
+        const defaultCoords = { lat: -13.9833, lng: 33.7833 };
         map = new google.maps.Map(document.getElementById("map"), {
             center: defaultCoords,
             zoom: 13,
@@ -229,19 +241,10 @@
             return;
         }
 
-        const message = `
-            Ride Confirmed!\n
-            Distance: ${distance}\n
-            Price: MK ${price.toFixed(2)}\n
-            Payment: ${paymentMethod}`;
-        alert(message);
-
-        // Show Driver on the Way message
+        document.getElementById("driver-animation").style.display = "block";
         document.getElementById("driver-message").innerText = "🚕 Driver on his way!";
     }
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvMFiXrKuTBCoDhsxxoYJ2BJiUgFEgrFg&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
-
-
