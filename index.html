@@ -80,8 +80,8 @@
     }
 
     function calculateRoute() {
-        if (!pickupMarker || !destinationMarker || !selectedVehicle) {
-            document.getElementById("info-text").innerText = "Select a mode of transport.";
+        if (!pickupMarker || !destinationMarker) {
+            document.getElementById("info-text").innerText = "Please set both pickup and destination locations.";
             return;
         }
 
@@ -96,7 +96,7 @@
                 distance = leg.distance.text;
                 price = (selectedVehicle === "car" ? 1500 : 1000) * (leg.distance.value / 1000);
                 document.getElementById("info-text").innerText =
-                    `Mode: ${selectedVehicle === "car" ? "Car" : "Motorbike"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
+                    `Mode: ${selectedVehicle ? (selectedVehicle === "car" ? "Car" : "Motorbike") : "N/A"}, Distance: ${distance}, Price: MK ${price.toFixed(2)}`;
             } else {
                 document.getElementById("info-text").innerText = "Could not calculate route.";
             }
@@ -113,7 +113,7 @@
         // Add 'selected' class to the chosen vehicle
         document.getElementById(vehicle + "Option").classList.add("selected");
 
-        // Clear animation or previous confirmation message
+        // Clear any previous confirmation message
         document.getElementById("driver-message").innerText = "";
         document.getElementById("driver-icon").hidden = true;
     }
@@ -153,25 +153,19 @@
     function confirmRide() {
         const paymentMethod = document.getElementById("paymentMethod").value;
 
-        if (!paymentMethod || !pickupMarker || !destinationMarker || !selectedVehicle) {
+        if (!paymentMethod || !pickupMarker || !destinationMarker) {
             alert("Please complete all fields before confirming the ride.");
             return;
         }
 
         alert(`Ride Confirmed!\n\nDistance: ${distance}\nPrice: MK ${price.toFixed(2)}\nPayment: ${paymentMethod}`);
 
-        // Display driver animation after confirmation
+        // Display animations for car and motorbike
         const driverMessage = document.getElementById("driver-message");
-        driverMessage.innerText = "Driver on his way!"; // Restore green message
+        driverMessage.innerText = "Driver on his way!";
         driverMessage.style.color = "green";
 
-        const driverIcon = document.getElementById("driver-icon");
-        driverIcon.hidden = false;
-
-        if (selectedVehicle === "car") {
-            driverIcon.src = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/minicar%202.gif";
-        } else if (selectedVehicle === "motorbike") {
-            driverIcon.src = "https://raw.githubusercontent.com/88448844/Icons/refs/heads/main/motorbike.gif";
-        }
+        document.getElementById("car-animation").hidden = false;
+        document.getElementById("bike-animation").hidden = false;
     }
 </script>
